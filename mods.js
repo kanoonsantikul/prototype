@@ -1,0 +1,31 @@
+"use strict";
+
+// Keep this list in sync with the plain-text `mods` pool file.
+const MOD_POOL = [
+  "“Attack” 1 dmg to 1 monster",
+  "“Attack” 3 dmg to 1 monster",
+  "“Repeat” the “Attack”",
+  "“Attack” + 1 dmg for each mod with “Attack”",
+  "“Attack” 1 dmg to 2 random monsters",
+  "Block 2 damage for 1 turn",
+  "Block 1 damage for 3 turns",
+  "“Critical”",
+  "When attacked, deal 1 damage back",
+  "Increase “attack” by 1 damage for 3 turns",
+  "Increase “guard” by 1 damage for 3 turns",
+  "Attacks deal x wound more damage for 3 turns",
+  "Deal 1 damage every turn for 3 turns",
+  "Target cannot take actions for 1 turn",
+  "Apply Death Spread status for 3 turns. If the afflicted character dies, spread all debuffs to 1 random character, including Death Spread",
+  "Reduce target’s attack by 1 damage for 3 turns",
+  "Increase “attack” against target by 1 damage for 3 turns",
+  "Select 3 Energy and change them to 1 desired color",
+  "Remove 3 Energy and create 2 Energy of the desired color",
+  "50% chance to get 1 blue energy",
+  "50% chance to get 1 red energy",
+  "50% chance to get 1 yellow energy",
+  "Spread all debuffs to adjacent targets",
+  "Draw 1 card; adjacent mod is disabled",
+  "Draw 1 card and discard 1 card",
+  "Play the card again 1 time",
+];

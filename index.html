@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rune Stone Deck Prototype</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main>
+    <section id="settings-panel" class="settings-panel" aria-labelledby="settings-title" hidden>
+      <header class="settings-header">
+        <div class="settings-header-text">
+          <p class="settings-eyebrow">Game configuration</p>
+          <h2 id="settings-title">Settings</h2>
+          <p class="settings-subtitle">Tune starting resources and drop rates. Changes apply to the next New game / End turn.</p>
+        </div>
+        <div class="settings-header-actions">
+          <button id="settings-close" type="button" class="settings-back-btn">← Back to game</button>
+        </div>
+      </header>
+
+      <div class="settings-body">
+        <section class="settings-section settings-section--generation" aria-labelledby="generation-title">
+          <div class="settings-section-head">
+            <h3 id="generation-title">Starting resources</h3>
+            <p>How many cards and stones you receive.</p>
+          </div>
+          <div class="count-settings">
+            <div class="count-setting">
+              <label class="count-setting-label" for="start-card-count">
+                <span class="count-setting-title">Cards at start</span>
+                <span class="count-setting-hint">Opening hand size</span>
+              </label>
+              <div class="stepper">
+                <button type="button" class="stepper-btn" data-stepper-for="start-card-count" data-delta="-1" aria-label="Decrease cards at start">−</button>
+                <input id="start-card-count" type="number" min="1" max="50" step="1" value="5" inputmode="numeric">
+                <button type="button" class="stepper-btn" data-stepper-for="start-card-count" data-delta="1" aria-label="Increase cards at start">+</button>
+              </div>
+            </div>
+            <div class="count-setting">
+              <label class="count-setting-label" for="turn-card-count">
+                <span class="count-setting-title">Cards each turn</span>
+                <span class="count-setting-hint">Drawn when you end a turn</span>
+              </label>
+              <div class="stepper">
+                <button type="button" class="stepper-btn" data-stepper-for="turn-card-count" data-delta="-1" aria-label="Decrease cards each turn">−</button>
+                <input id="turn-card-count" type="number" min="0" max="50" step="1" value="1" inputmode="numeric">
+                <button type="button" class="stepper-btn" data-stepper-for="turn-card-count" data-delta="1" aria-label="Increase cards each turn">+</button>
+              </div>
+            </div>
+            <div class="count-setting">
+              <label class="count-setting-label" for="start-stone-count">
+                <span class="count-setting-title">Stones at start</span>
+                <span class="count-setting-hint">Initial tray stones</span>
+              </label>
+              <div class="stepper">
+                <button type="button" class="stepper-btn" data-stepper-for="start-stone-count" data-delta="-1" aria-label="Decrease stones at start">−</button>
+                <input id="start-stone-count" type="number" min="0" max="100" step="1" value="5" inputmode="numeric">
+                <button type="button" class="stepper-btn" data-stepper-for="start-stone-count" data-delta="1" aria-label="Increase stones at start">+</button>
+              </div>
+            </div>
+            <div class="count-setting">
+              <label class="count-setting-label" for="turn-stone-count">
+                <span class="count-setting-title">Stones each turn</span>
+                <span class="count-setting-hint">Gained when you end a turn</span>
+              </label>
+              <div class="stepper">
+                <button type="button" class="stepper-btn" data-stepper-for="turn-stone-count" data-delta="-1" aria-label="Decrease stones each turn">−</button>
+                <input id="turn-stone-count" type="number" min="0" max="100" step="1" value="3" inputmode="numeric">
+                <button type="button" class="stepper-btn" data-stepper-for="turn-stone-count" data-delta="1" aria-label="Increase stones each turn">+</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div class="settings-columns">
+          <section class="settings-section" aria-labelledby="card-weights-title">
+            <div class="settings-section-head">
+              <h3 id="card-weights-title">Card sockets</h3>
+              <p>Relative chance when generating cards. Higher weight = more common.</p>
+            </div>
+            <div class="settings-groups">
+              <fieldset class="settings-group">
+                <legend>Socket count</legend>
+                <div id="socket-count-weights" class="weight-list"></div>
+              </fieldset>
+              <fieldset class="settings-group">
+                <legend>Socket rune</legend>
+                <div id="socket-rune-weights" class="weight-list"></div>
+              </fieldset>
+            </div>
+          </section>
+
+          <section class="settings-section" aria-labelledby="stone-weights-title">
+            <div class="settings-section-head">
+              <h3 id="stone-weights-title">Rune stones</h3>
+              <p>Relative chance when spawning stones in your tray.</p>
+            </div>
+            <div class="settings-groups">
+              <fieldset class="settings-group">
+                <legend>Stone color</legend>
+                <div id="stone-type-weights" class="weight-list"></div>
+              </fieldset>
+              <fieldset class="settings-group">
+                <legend>Stone rune</legend>
+                <div id="stone-rune-weights" class="weight-list"></div>
+              </fieldset>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <footer class="settings-footer">
+        <div class="settings-footer-status">
+          <span class="settings-live-dot" aria-hidden="true"></span>
+          <p id="settings-note" aria-live="polite">Auto-saves as you edit</p>
+        </div>
+        <button id="reset-settings" type="button" class="settings-reset-btn">Reset defaults</button>
+      </footer>
+    </section>
+
+    <section id="game-board" class="game-board" aria-labelledby="deck-title">
+      <header class="deck-header">
+        <h1 id="deck-title">Deck</h1>
+        <div id="deck-count">0 cards</div>
+        <button id="end-turn" class="primary" type="button" disabled>End turn</button>
+        <button id="new-game-in-game" type="button">New game</button>
+        <button id="settings-in-game" type="button" aria-expanded="false" aria-controls="settings-panel">Settings</button>
+      </header>
+
+      <div class="play-area">
+        <section class="active-card-panel" aria-label="Active card">
+          <header class="active-card-header">
+            <h2 id="active-card-name" hidden>No card selected</h2>
+            <span id="active-card-details"></span>
+          </header>
+          <div class="active-card-body">
+            <div class="active-card-stage">
+              <canvas id="active-card" width="1024" height="1536">
+                Your browser does not support HTML canvas.
+              </canvas>
+            </div>
+            <aside class="card-mods-panel" aria-label="Socketed mods">
+              <header class="card-mods-header">
+                <h3>Mods</h3>
+                <span id="card-mod-count">0</span>
+              </header>
+              <ul id="card-mods" class="card-mods-list"></ul>
+            </aside>
+          </div>
+        </section>
+
+        <aside class="rune-tray" aria-label="Available rune stones">
+          <header class="rune-tray-header">
+            <h2>Stones</h2>
+            <span id="stone-count">0</span>
+          </header>
+          <div id="rune-stones" class="rune-list" role="list"></div>
+        </aside>
+      </div>
+
+      <section class="deck-browser" aria-label="Your deck">
+        <header class="deck-browser-header">
+          <span id="game-status" aria-live="polite"></span>
+        </header>
+        <div id="cards" class="card-list" aria-label="Cards in your deck"></div>
+      </section>
+    </section>
+  </main>
+
+  <script src="constants.js"></script>
+  <script src="mods.js"></script>
+  <script src="utils.js"></script>
+  <script src="assets.js"></script>
+  <script src="game-logic.js"></script>
+  <script src="renderer.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
