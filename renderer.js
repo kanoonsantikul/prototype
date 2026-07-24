@@ -133,6 +133,78 @@ function drawDeckThumbnail(card, loadedAssets) {
   drawCardSurface(card, card.thumbnailCanvas, card.thumbnailContext, loadedAssets);
 }
 
+function drawFighterPortrait(targetContext, image, centerX, baselineY, maxHeight, label, flipHorizontal = false) {
+  const aspect = image.width / image.height;
+  const height = maxHeight;
+  const width = height * aspect;
+  const left = centerX - width / 2;
+  const top = baselineY - height;
+
+  targetContext.save();
+  if (flipHorizontal) {
+    targetContext.translate(centerX * 2, 0);
+    targetContext.scale(-1, 1);
+  }
+  targetContext.drawImage(image, left, top, width, height);
+  targetContext.restore();
+
+  targetContext.save();
+  targetContext.font = "700 28px Segoe UI, system-ui, sans-serif";
+  targetContext.textAlign = "center";
+  targetContext.textBaseline = "top";
+  targetContext.fillStyle = "rgba(232, 244, 236, 0.92)";
+  targetContext.shadowColor = "rgba(0, 0, 0, 0.75)";
+  targetContext.shadowBlur = 8;
+  targetContext.fillText(label, centerX, baselineY + 12);
+  targetContext.restore();
+}
+
+function drawCombat(canvas, context, loadedAssets, enemy) {
+  if (!loadedAssets || !context) return;
+
+  const scaleX = canvas.width / COMBAT_WIDTH;
+  const scaleY = canvas.height / COMBAT_HEIGHT;
+
+  context.setTransform(1, 0, 0, 1, 0, 0);
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.save();
+  context.scale(scaleX, scaleY);
+
+  const ground = context.createLinearGradient(0, COMBAT_HEIGHT * 0.55, 0, COMBAT_HEIGHT);
+  ground.addColorStop(0, "rgba(8, 22, 16, 0)");
+  ground.addColorStop(0.45, "rgba(10, 28, 20, 0.35)");
+  ground.addColorStop(1, "rgba(4, 12, 9, 0.7)");
+  context.fillStyle = ground;
+  context.fillRect(0, 0, COMBAT_WIDTH, COMBAT_HEIGHT);
+
+  const baselineY = COMBAT_HEIGHT - 70;
+  const heroCenterX = COMBAT_WIDTH * 0.28;
+  const enemyCenterX = COMBAT_WIDTH * 0.72;
+
+  drawFighterPortrait(
+    context,
+    loadedAssets.hero,
+    heroCenterX,
+    baselineY,
+    COMBAT_FIGHTER_HEIGHT,
+    "Hero",
+  );
+
+  if (enemy?.image) {
+    drawFighterPortrait(
+      context,
+      enemy.image,
+      enemyCenterX,
+      baselineY,
+      COMBAT_FIGHTER_HEIGHT,
+      enemy.label || "Enemy",
+      true,
+    );
+  }
+
+  context.restore();
+}
+
 function cardPointFromClientPoint(clientX, clientY, canvas) {
   const bounds = canvas.getBoundingClientRect();
 

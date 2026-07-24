@@ -18,6 +18,8 @@ function loadNamedImages(definitions) {
 
 const assets = {
   card: loadImage("game-assets/card-template.png"),
+  hero: loadImage("game-assets/characters/hero.png"),
+  enemies: loadNamedImages(ENEMY_ASSETS),
   socket: loadImage("game-assets/socket-circle.png"),
   runes: loadNamedImages(SOCKET_RUNE_ASSETS),
   radiantRunes: loadNamedImages(RADIANT_RUNE_ASSETS),
@@ -30,8 +32,10 @@ let cachedLoadedAssets = null;
 async function getLoadedAssets() {
   if (cachedLoadedAssets) return cachedLoadedAssets;
 
-  const [card, socket, runes, link, runeStones, radiantRunes] = await Promise.all([
+  const [card, hero, enemies, socket, runes, link, runeStones, radiantRunes] = await Promise.all([
     assets.card,
+    assets.hero,
+    assets.enemies,
     assets.socket,
     assets.runes,
     assets.link,
@@ -45,6 +49,8 @@ async function getLoadedAssets() {
 
   cachedLoadedAssets = {
     card,
+    hero,
+    enemies,
     socket,
     runes,
     link,

@@ -13,7 +13,7 @@
         <div class="settings-header-text">
           <p class="settings-eyebrow">Game configuration</p>
           <h2 id="settings-title">Settings</h2>
-          <p class="settings-subtitle">Tune starting resources and drop rates. Changes apply to the next New game / End turn.</p>
+          <p class="settings-subtitle">Tune deck-building resources, combat hand size, and drop rates. Changes apply on New game or when starting combat.</p>
         </div>
         <div class="settings-header-actions">
           <button id="settings-close" type="button" class="settings-back-btn">← Back to game</button>
@@ -23,52 +23,63 @@
       <div class="settings-body">
         <section class="settings-section settings-section--generation" aria-labelledby="generation-title">
           <div class="settings-section-head">
-            <h3 id="generation-title">Starting resources</h3>
-            <p>How many cards and stones you receive.</p>
+            <h3 id="generation-title">Phase resources</h3>
+            <p>Deck building grants cards and stones. Combat draws a hand each turn. Ending combat returns you to deck building with reward cards and stones.</p>
           </div>
           <div class="count-settings">
             <div class="count-setting">
               <label class="count-setting-label" for="start-card-count">
-                <span class="count-setting-title">Cards at start</span>
-                <span class="count-setting-hint">Opening hand size</span>
+                <span class="count-setting-title">Deck cards</span>
+                <span class="count-setting-hint">Cards given in deck building</span>
               </label>
               <div class="stepper">
-                <button type="button" class="stepper-btn" data-stepper-for="start-card-count" data-delta="-1" aria-label="Decrease cards at start">−</button>
+                <button type="button" class="stepper-btn" data-stepper-for="start-card-count" data-delta="-1" aria-label="Decrease deck cards">−</button>
                 <input id="start-card-count" type="number" min="1" max="50" step="1" value="5" inputmode="numeric">
-                <button type="button" class="stepper-btn" data-stepper-for="start-card-count" data-delta="1" aria-label="Increase cards at start">+</button>
-              </div>
-            </div>
-            <div class="count-setting">
-              <label class="count-setting-label" for="turn-card-count">
-                <span class="count-setting-title">Cards each turn</span>
-                <span class="count-setting-hint">Drawn when you end a turn</span>
-              </label>
-              <div class="stepper">
-                <button type="button" class="stepper-btn" data-stepper-for="turn-card-count" data-delta="-1" aria-label="Decrease cards each turn">−</button>
-                <input id="turn-card-count" type="number" min="0" max="50" step="1" value="1" inputmode="numeric">
-                <button type="button" class="stepper-btn" data-stepper-for="turn-card-count" data-delta="1" aria-label="Increase cards each turn">+</button>
+                <button type="button" class="stepper-btn" data-stepper-for="start-card-count" data-delta="1" aria-label="Increase deck cards">+</button>
               </div>
             </div>
             <div class="count-setting">
               <label class="count-setting-label" for="start-stone-count">
-                <span class="count-setting-title">Stones at start</span>
-                <span class="count-setting-hint">Initial tray stones</span>
+                <span class="count-setting-title">Rune stones</span>
+                <span class="count-setting-hint">Stones given in deck building</span>
               </label>
               <div class="stepper">
-                <button type="button" class="stepper-btn" data-stepper-for="start-stone-count" data-delta="-1" aria-label="Decrease stones at start">−</button>
+                <button type="button" class="stepper-btn" data-stepper-for="start-stone-count" data-delta="-1" aria-label="Decrease rune stones">−</button>
                 <input id="start-stone-count" type="number" min="0" max="100" step="1" value="5" inputmode="numeric">
-                <button type="button" class="stepper-btn" data-stepper-for="start-stone-count" data-delta="1" aria-label="Increase stones at start">+</button>
+                <button type="button" class="stepper-btn" data-stepper-for="start-stone-count" data-delta="1" aria-label="Increase rune stones">+</button>
               </div>
             </div>
             <div class="count-setting">
-              <label class="count-setting-label" for="turn-stone-count">
-                <span class="count-setting-title">Stones each turn</span>
-                <span class="count-setting-hint">Gained when you end a turn</span>
+              <label class="count-setting-label" for="combat-hand-size">
+                <span class="count-setting-title">Combat hand size</span>
+                <span class="count-setting-hint">Cards drawn each combat turn</span>
               </label>
               <div class="stepper">
-                <button type="button" class="stepper-btn" data-stepper-for="turn-stone-count" data-delta="-1" aria-label="Decrease stones each turn">−</button>
-                <input id="turn-stone-count" type="number" min="0" max="100" step="1" value="3" inputmode="numeric">
-                <button type="button" class="stepper-btn" data-stepper-for="turn-stone-count" data-delta="1" aria-label="Increase stones each turn">+</button>
+                <button type="button" class="stepper-btn" data-stepper-for="combat-hand-size" data-delta="-1" aria-label="Decrease combat hand size">−</button>
+                <input id="combat-hand-size" type="number" min="1" max="20" step="1" value="3" inputmode="numeric">
+                <button type="button" class="stepper-btn" data-stepper-for="combat-hand-size" data-delta="1" aria-label="Increase combat hand size">+</button>
+              </div>
+            </div>
+            <div class="count-setting">
+              <label class="count-setting-label" for="reward-card-count">
+                <span class="count-setting-title">Reward cards</span>
+                <span class="count-setting-hint">Cards gained after combat</span>
+              </label>
+              <div class="stepper">
+                <button type="button" class="stepper-btn" data-stepper-for="reward-card-count" data-delta="-1" aria-label="Decrease reward cards">−</button>
+                <input id="reward-card-count" type="number" min="0" max="50" step="1" value="1" inputmode="numeric">
+                <button type="button" class="stepper-btn" data-stepper-for="reward-card-count" data-delta="1" aria-label="Increase reward cards">+</button>
+              </div>
+            </div>
+            <div class="count-setting">
+              <label class="count-setting-label" for="reward-stone-count">
+                <span class="count-setting-title">Reward stones</span>
+                <span class="count-setting-hint">Stones gained after combat</span>
+              </label>
+              <div class="stepper">
+                <button type="button" class="stepper-btn" data-stepper-for="reward-stone-count" data-delta="-1" aria-label="Decrease reward stones">−</button>
+                <input id="reward-stone-count" type="number" min="0" max="100" step="1" value="3" inputmode="numeric">
+                <button type="button" class="stepper-btn" data-stepper-for="reward-stone-count" data-delta="1" aria-label="Increase reward stones">+</button>
               </div>
             </div>
           </div>
@@ -120,11 +131,15 @@
       </footer>
     </section>
 
-    <section id="game-board" class="game-board" aria-labelledby="deck-title">
+    <section id="game-board" class="game-board phase-deck-building" data-phase="deck-building" aria-labelledby="phase-title">
       <header class="deck-header">
-        <h1 id="deck-title">Deck</h1>
+        <div class="phase-heading">
+          <p id="phase-eyebrow" class="phase-eyebrow">Phase 1</p>
+          <h1 id="phase-title">Deck building</h1>
+        </div>
         <div id="deck-count">0 cards</div>
-        <button id="end-turn" class="primary" type="button" disabled>End turn</button>
+        <button id="start-combat" class="primary" type="button" disabled>Start combat</button>
+        <button id="end-combat" class="primary" type="button" hidden disabled>End combat</button>
         <button id="new-game-in-game" type="button">New game</button>
         <button id="settings-in-game" type="button" aria-expanded="false" aria-controls="settings-panel">Settings</button>
       </header>
@@ -158,10 +173,54 @@
           </header>
           <div id="rune-stones" class="rune-list" role="list"></div>
         </aside>
+
+        <section class="combat-panel" aria-label="Combat">
+          <header class="combat-panel-header">
+            <h2>Combat</h2>
+            <span id="combat-turn-label" class="combat-turn-label" hidden>Turn 0</span>
+          </header>
+          <div class="combat-stage">
+            <canvas id="combat-canvas" width="1024" height="640">
+              Your browser does not support HTML canvas.
+            </canvas>
+          </div>
+          <div class="combat-fighters" aria-label="Fighter trackers">
+            <article class="fighter-card" aria-label="Hero tracker">
+              <header class="fighter-card-header">
+                <h3 id="hero-name">Hero</h3>
+                <label class="fighter-hp-field" for="hero-hp">
+                  <span>HP</span>
+                  <input id="hero-hp" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" value="20" aria-label="Hero HP">
+                </label>
+              </header>
+              <label class="fighter-notes-field" for="hero-notes">
+                <span>Notes</span>
+                <textarea id="hero-notes" rows="5" placeholder="Status effects, buffs…" aria-label="Hero notes"></textarea>
+              </label>
+            </article>
+            <article class="fighter-card fighter-card--enemy" aria-label="Enemy tracker">
+              <header class="fighter-card-header">
+                <h3 id="enemy-name">Enemy</h3>
+                <label class="fighter-hp-field" for="enemy-hp">
+                  <span>HP</span>
+                  <input id="enemy-hp" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" value="20" aria-label="Enemy HP">
+                </label>
+              </header>
+              <label class="fighter-notes-field" for="enemy-notes">
+                <span>Notes</span>
+                <textarea id="enemy-notes" rows="5" placeholder="Status effects, intents…" aria-label="Enemy notes"></textarea>
+              </label>
+            </article>
+          </div>
+          <div class="combat-actions">
+            <button id="end-turn" class="primary" type="button" hidden disabled>End turn</button>
+          </div>
+        </section>
       </div>
 
       <section class="deck-browser" aria-label="Your deck">
         <header class="deck-browser-header">
+          <span id="card-browser-label">Your deck</span>
           <span id="game-status" aria-live="polite"></span>
         </header>
         <div id="cards" class="card-list" aria-label="Cards in your deck"></div>

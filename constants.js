@@ -4,6 +4,9 @@ const CARD_WIDTH = 1024;
 const CARD_HEIGHT = 1536;
 const DECK_THUMBNAIL_WIDTH = 256;
 const DECK_THUMBNAIL_HEIGHT = 384;
+const COMBAT_WIDTH = 1024;
+const COMBAT_HEIGHT = 640;
+const COMBAT_FIGHTER_HEIGHT = 420;
 // The source socket occupies roughly this footprint in the 1024 px-wide concept.
 const SOCKET_SIZE = 288;
 const SOCKET_GAP = 12;
@@ -33,12 +36,28 @@ const RUNE_STONE_ASSETS = [
   { name: "green", source: "game-assets/rune-stones/rune-stone-green.png" },
   { name: "blue", source: "game-assets/rune-stones/rune-stone-blue.png" },
 ];
+const ENEMY_ASSETS = [
+  { name: "minion", label: "Minion", source: "game-assets/characters/enemy-minion.png" },
+  { name: "speed", label: "Speed", source: "game-assets/characters/enemy-speed.png" },
+  { name: "tank", label: "Tank", source: "game-assets/characters/enemy-tank.png" },
+];
 const SOCKET_COUNT_OPTIONS = [1, 2, 3, 4, 5, 6, 7];
+const PHASE_DECK_BUILDING = "deck-building";
+const PHASE_COMBAT = "combat";
+
+const DEFAULT_FIGHTER_STATS = {
+  heroHp: "20",
+  heroNotes: "",
+  enemyHp: "20",
+  enemyNotes: "",
+};
+
 const DEFAULT_GAME_SETTINGS = {
   startCardCount: 5,
-  turnCardCount: 1,
   startStoneCount: 5,
-  turnStoneCount: 3,
+  combatHandSize: 3,
+  rewardCardCount: 1,
+  rewardStoneCount: 3,
   socketCountWeights: Object.fromEntries(SOCKET_COUNT_OPTIONS.map((count) => [count, 1])),
   socketRuneWeights: Object.fromEntries(SOCKET_RUNE_ASSETS.map((rune) => [rune.name, 1])),
   stoneTypeWeights: Object.fromEntries(RUNE_STONE_ASSETS.map((stone) => [stone.name, 1])),

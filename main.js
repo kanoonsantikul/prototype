@@ -1,21 +1,28 @@
 "use strict";
 
+const gameBoard = document.querySelector("#game-board");
 const newGameButton = document.querySelector("#new-game-in-game");
+const startCombatButton = document.querySelector("#start-combat");
 const endTurnButton = document.querySelector("#end-turn");
+const endCombatButton = document.querySelector("#end-combat");
 const settingsInGameButton = document.querySelector("#settings-in-game");
 const settingsCloseButton = document.querySelector("#settings-close");
 const settingsPanel = document.querySelector("#settings-panel");
 const resetSettingsButton = document.querySelector("#reset-settings");
 const settingsNote = document.querySelector("#settings-note");
 const startCardCountInput = document.querySelector("#start-card-count");
-const turnCardCountInput = document.querySelector("#turn-card-count");
 const startStoneCountInput = document.querySelector("#start-stone-count");
-const turnStoneCountInput = document.querySelector("#turn-stone-count");
+const combatHandSizeInput = document.querySelector("#combat-hand-size");
+const rewardCardCountInput = document.querySelector("#reward-card-count");
+const rewardStoneCountInput = document.querySelector("#reward-stone-count");
 const socketCountWeights = document.querySelector("#socket-count-weights");
 const socketRuneWeights = document.querySelector("#socket-rune-weights");
 const stoneTypeWeights = document.querySelector("#stone-type-weights");
 const stoneRuneWeights = document.querySelector("#stone-rune-weights");
+const phaseEyebrow = document.querySelector("#phase-eyebrow");
+const phaseTitle = document.querySelector("#phase-title");
 const gameStatus = document.querySelector("#game-status");
+const cardBrowserLabel = document.querySelector("#card-browser-label");
 const cardList = document.querySelector("#cards");
 const deckCount = document.querySelector("#deck-count");
 const activeCardCanvas = document.querySelector("#active-card");
@@ -26,11 +33,26 @@ const cardModsList = document.querySelector("#card-mods");
 const cardModCount = document.querySelector("#card-mod-count");
 const runeStoneList = document.querySelector("#rune-stones");
 const stoneCount = document.querySelector("#stone-count");
+const combatCanvas = document.querySelector("#combat-canvas");
+const combatContext = combatCanvas.getContext("2d");
+const combatTurnLabel = document.querySelector("#combat-turn-label");
+const heroNameLabel = document.querySelector("#hero-name");
+const enemyNameLabel = document.querySelector("#enemy-name");
+const heroHpInput = document.querySelector("#hero-hp");
+const enemyHpInput = document.querySelector("#enemy-hp");
+const heroNotesInput = document.querySelector("#hero-notes");
+const enemyNotesInput = document.querySelector("#enemy-notes");
 
 let loadedAssets = null;
 let gameSettings = structuredClone(DEFAULT_GAME_SETTINGS);
+let phase = PHASE_DECK_BUILDING;
 let deck = [];
+let drawPile = [];
+let discardPile = [];
+let hand = [];
 let sideGems = [];
+let currentEnemy = null;
+let combatTurn = 0;
 let selectedCardId = null;
 let nextCardId = 1;
 let nextGemId = 1;
@@ -39,6 +61,18 @@ let draggingPointerId = null;
 let draggingToken = null;
 let dragPreview = null;
 let dropTarget = null;
+
+function isDeckBuilding() {
+  return phase === PHASE_DECK_BUILDING;
+}
+
+function isCombat() {
+  return phase === PHASE_COMBAT;
+}
+
+function visibleCards() {
+  return isCombat() ? hand : deck;
+}
 
 function setStatus(message) {
   gameStatus.textContent = message;
@@ -183,9 +217,10 @@ function syncLinkedWeightInputs(sourceInput) {
 function syncSettingsFromControls(announce = true) {
   gameSettings = {
     startCardCount: readBoundedInteger(startCardCountInput, DEFAULT_GAME_SETTINGS.startCardCount),
-    turnCardCount: readBoundedInteger(turnCardCountInput, DEFAULT_GAME_SETTINGS.turnCardCount),
     startStoneCount: readBoundedInteger(startStoneCountInput, DEFAULT_GAME_SETTINGS.startStoneCount),
-    turnStoneCount: readBoundedInteger(turnStoneCountInput, DEFAULT_GAME_SETTINGS.turnStoneCount),
+    combatHandSize: readBoundedInteger(combatHandSizeInput, DEFAULT_GAME_SETTINGS.combatHandSize),
+    rewardCardCount: readBoundedInteger(rewardCardCountInput, DEFAULT_GAME_SETTINGS.rewardCardCount),
+    rewardStoneCount: readBoundedInteger(rewardStoneCountInput, DEFAULT_GAME_SETTINGS.rewardStoneCount),
     socketCountWeights: readWeightControls(socketCountWeights),
     socketRuneWeights: readWeightControls(socketRuneWeights),
     stoneTypeWeights: readWeightControls(stoneTypeWeights),
@@ -198,15 +233,16 @@ function syncSettingsFromControls(announce = true) {
   updateWeightPercentages(stoneRuneWeights);
 
   if (announce) {
-    settingsNote.textContent = "Saved · applies on next New game / End turn";
+    settingsNote.textContent = "Saved · applies on next New game, Start combat, or End combat";
   }
 }
 
 function writeSettingsToControls() {
   startCardCountInput.value = gameSettings.startCardCount;
-  turnCardCountInput.value = gameSettings.turnCardCount;
   startStoneCountInput.value = gameSettings.startStoneCount;
-  turnStoneCountInput.value = gameSettings.turnStoneCount;
+  combatHandSizeInput.value = gameSettings.combatHandSize;
+  rewardCardCountInput.value = gameSettings.rewardCardCount;
+  rewardStoneCountInput.value = gameSettings.rewardStoneCount;
 
   for (const [container, settingsKey] of [
     [socketCountWeights, "socketCountWeights"],
@@ -279,11 +315,77 @@ function initializeSettings() {
 }
 
 function selectedCard() {
-  return deck.find((card) => card.id === selectedCardId) || null;
+  return visibleCards().find((card) => card.id === selectedCardId) || null;
+}
+
+function clearCardUiBindings(cards) {
+  for (const card of cards) {
+    card.deckButton = null;
+    card.deckMeta = null;
+    card.thumbnailCanvas = null;
+    card.thumbnailContext = null;
+  }
+}
+
+function updatePhaseChrome() {
+  const deckBuilding = isDeckBuilding();
+
+  gameBoard.dataset.phase = phase;
+  gameBoard.classList.toggle("phase-deck-building", deckBuilding);
+  gameBoard.classList.toggle("phase-combat", !deckBuilding);
+
+  phaseEyebrow.textContent = deckBuilding ? "Phase 1" : "Phase 2";
+  phaseTitle.textContent = deckBuilding ? "Deck building" : "Combat";
+  cardBrowserLabel.textContent = deckBuilding ? "Your deck" : "Your hand";
+  cardList.setAttribute("aria-label", deckBuilding ? "Cards in your deck" : "Cards in your hand");
+
+  startCombatButton.hidden = !deckBuilding;
+  startCombatButton.disabled = !deckBuilding || deck.length === 0;
+  endTurnButton.hidden = deckBuilding;
+  endTurnButton.disabled = deckBuilding || deck.length === 0;
+  endCombatButton.hidden = deckBuilding;
+  endCombatButton.disabled = deckBuilding || deck.length === 0;
+  combatTurnLabel.hidden = deckBuilding;
+  combatTurnLabel.textContent = deckBuilding ? "Turn 0" : `Turn ${combatTurn}`;
+
+  if (deckBuilding) {
+    deckCount.textContent = `${deck.length} cards · ${sideGems.length} stones`;
+  } else {
+    deckCount.textContent = `Hand ${hand.length} · Draw ${drawPile.length} · Discard ${discardPile.length}`;
+  }
 }
 
 function redrawActiveCard() {
   drawActiveCard(selectedCard(), activeCardCanvas, activeCardContext, loadedAssets, dropTarget);
+}
+
+function selectRandomEnemy() {
+  if (!loadedAssets?.enemies?.length) {
+    currentEnemy = null;
+    return null;
+  }
+
+  currentEnemy = randomItem(loadedAssets.enemies);
+  return currentEnemy;
+}
+
+function resetFighterTrackers() {
+  heroNameLabel.textContent = "Hero";
+  enemyNameLabel.textContent = currentEnemy?.label || "Enemy";
+  heroHpInput.value = DEFAULT_FIGHTER_STATS.heroHp;
+  enemyHpInput.value = DEFAULT_FIGHTER_STATS.enemyHp;
+  heroNotesInput.value = DEFAULT_FIGHTER_STATS.heroNotes;
+  enemyNotesInput.value = DEFAULT_FIGHTER_STATS.enemyNotes;
+}
+
+function updateFighterLabels() {
+  heroNameLabel.textContent = "Hero";
+  enemyNameLabel.textContent = currentEnemy?.label || "Enemy";
+}
+
+function redrawCombat() {
+  updateFighterLabels();
+  drawCombat(combatCanvas, combatContext, loadedAssets, currentEnemy);
 }
 
 function clearDropFeedback() {
@@ -368,6 +470,11 @@ function updatePointerDropFeedback(clientX, clientY) {
 }
 
 function placeGemOnCard(gem, card, socketIndex) {
+  if (!isDeckBuilding()) {
+    clearDropFeedback();
+    return false;
+  }
+
   const socket = card.sockets[socketIndex];
 
   if (socket.gem) {
@@ -386,10 +493,12 @@ function placeGemOnCard(gem, card, socketIndex) {
   clearDropFeedback();
   drawDeckThumbnail(card, loadedAssets);
   updateActiveCardDetails(card);
+  updatePhaseChrome();
   return true;
 }
 
 function handleGemPointerDown(event, gem) {
+  if (!isDeckBuilding()) return;
   if (event.isPrimary === false || (event.pointerType === "mouse" && event.button !== 0)) return;
 
   event.preventDefault();
@@ -509,14 +618,15 @@ function updateActiveCardDetails(card = selectedCard()) {
 }
 
 function selectCard(cardId, announce = true) {
-  const card = deck.find((candidate) => candidate.id === cardId);
+  const cards = visibleCards();
+  const card = cards.find((candidate) => candidate.id === cardId);
   if (!card) return;
 
   selectedCardId = card.id;
   dropTarget = null;
   activeCardCanvas.classList.remove("drop-valid", "drop-invalid");
 
-  for (const candidate of deck) {
+  for (const candidate of cards) {
     candidate.deckButton?.setAttribute("aria-pressed", String(candidate.id === card.id));
   }
 
@@ -529,10 +639,12 @@ function selectCard(cardId, announce = true) {
   }
 }
 
-function renderDeck(preferredCardId = selectedCardId) {
+function renderCardBrowser(preferredCardId = selectedCardId) {
+  const cards = visibleCards();
+  clearCardUiBindings(deck);
   const fragment = document.createDocumentFragment();
 
-  deck.forEach((card) => {
+  cards.forEach((card) => {
     const button = document.createElement("button");
     const thumbnail = document.createElement("canvas");
     const name = document.createElement("span");
@@ -564,10 +676,127 @@ function renderDeck(preferredCardId = selectedCardId) {
   });
 
   cardList.replaceChildren(fragment);
-  deck.forEach((card) => drawDeckThumbnail(card, loadedAssets));
-  deckCount.textContent = `${deck.length} cards`;
-  const cardToSelect = deck.find((card) => card.id === preferredCardId) || deck[0];
-  selectCard(cardToSelect?.id, false);
+  cards.forEach((card) => drawDeckThumbnail(card, loadedAssets));
+  updatePhaseChrome();
+
+  if (cards.length === 0) {
+    selectedCardId = null;
+    activeCardName.textContent = "";
+    updateActiveCardDetails(null);
+    redrawActiveCard();
+    return;
+  }
+
+  const cardToSelect = cards.find((card) => card.id === preferredCardId) || cards[0];
+  selectCard(cardToSelect.id, false);
+}
+
+function reshuffleDiscardIntoDrawPile() {
+  if (drawPile.length > 0 || discardPile.length === 0) return;
+  drawPile = shuffled(discardPile);
+  discardPile = [];
+}
+
+function drawCards(count) {
+  const drawn = [];
+
+  for (let index = 0; index < count; index += 1) {
+    reshuffleDiscardIntoDrawPile();
+    if (drawPile.length === 0) break;
+    drawn.push(drawPile.shift());
+  }
+
+  return drawn;
+}
+
+function beginCombatTurn() {
+  if (!isCombat() || deck.length === 0) return;
+
+  clearCardUiBindings(hand);
+  discardPile.push(...hand);
+  hand = [];
+  combatTurn += 1;
+
+  const drawn = drawCards(gameSettings.combatHandSize);
+  hand = drawn;
+  renderCardBrowser(hand[0]?.id);
+  updatePhaseChrome();
+  setStatus(
+    drawn.length > 0
+      ? `Drew ${drawn.length} card${drawn.length === 1 ? "" : "s"}. Cards are locked during combat.`
+      : "No cards left to draw.",
+  );
+}
+
+function startCombat() {
+  if (!loadedAssets || !isDeckBuilding() || deck.length === 0) return;
+
+  resetPointerDrag();
+  clearDropFeedback();
+  phase = PHASE_COMBAT;
+  combatTurn = 0;
+  hand = [];
+  discardPile = [];
+  drawPile = shuffled(deck);
+  selectRandomEnemy();
+  resetFighterTrackers();
+  redrawCombat();
+  closeSettings();
+  beginCombatTurn();
+}
+
+function endTurn() {
+  if (!loadedAssets || !isCombat() || deck.length === 0) return;
+
+  resetPointerDrag();
+  clearDropFeedback();
+  beginCombatTurn();
+}
+
+function endCombat() {
+  if (!loadedAssets || !isCombat() || deck.length === 0) return;
+
+  resetPointerDrag();
+  clearDropFeedback();
+
+  clearCardUiBindings(hand);
+  hand = [];
+  drawPile = [];
+  discardPile = [];
+  combatTurn = 0;
+  phase = PHASE_DECK_BUILDING;
+
+  const firstNewCardIndex = deck.length;
+  const newCards = Array.from(
+    { length: gameSettings.rewardCardCount },
+    (_, index) => {
+      const card = createRandomCard(loadedAssets, firstNewCardIndex + index, gameSettings, nextCardId);
+      nextCardId += 1;
+      return card;
+    },
+  );
+  deck.push(...newCards);
+
+  const newGems = createRandomGems(
+    loadedAssets.runeStones,
+    loadedAssets.radiantRunes,
+    loadedAssets.mods,
+    gameSettings.rewardStoneCount,
+    gameSettings,
+    nextGemId,
+  );
+  nextGemId += newGems.length;
+  sideGems.push(...newGems);
+
+  const preferredCardId = newCards.at(-1)?.id || selectedCardId;
+  renderCardBrowser(preferredCardId);
+  renderSideRuneStones();
+  closeSettings();
+  updatePhaseChrome();
+
+  const cardLabel = `${newCards.length} card${newCards.length === 1 ? "" : "s"}`;
+  const stoneLabel = `${newGems.length} stone${newGems.length === 1 ? "" : "s"}`;
+  setStatus(`Combat ended. Gained ${cardLabel} and ${stoneLabel}. Socket stones, then start combat again.`);
 }
 
 function startNewGame() {
@@ -577,8 +806,13 @@ function startNewGame() {
   dropTarget = null;
   selectedCardId = null;
   activeCardCanvas.classList.remove("drop-valid", "drop-invalid");
+  phase = PHASE_DECK_BUILDING;
+  combatTurn = 0;
   nextCardId = 1;
   nextGemId = 1;
+  hand = [];
+  drawPile = [];
+  discardPile = [];
   deck = Array.from(
     { length: gameSettings.startCardCount },
     (_, index) => {
@@ -596,52 +830,23 @@ function startNewGame() {
     nextGemId,
   );
   nextGemId += sideGems.length;
+  selectRandomEnemy();
+  resetFighterTrackers();
 
-  renderDeck();
+  renderCardBrowser();
   renderSideRuneStones();
+  redrawCombat();
   closeSettings();
-  endTurnButton.disabled = false;
-  setStatus("");
-}
-
-function endTurn() {
-  if (!loadedAssets || deck.length === 0) return;
-
-  resetPointerDrag();
-  dropTarget = null;
-  activeCardCanvas.classList.remove("drop-valid", "drop-invalid");
-
-  const firstNewCardIndex = deck.length;
-  const newCards = Array.from(
-    { length: gameSettings.turnCardCount },
-    (_, index) => {
-      const card = createRandomCard(loadedAssets, firstNewCardIndex + index, gameSettings, nextCardId);
-      nextCardId += 1;
-      return card;
-    },
-  );
-  deck.push(...newCards);
-  const newGems = createRandomGems(
-    loadedAssets.runeStones,
-    loadedAssets.radiantRunes,
-    loadedAssets.mods,
-    gameSettings.turnStoneCount,
-    gameSettings,
-    nextGemId,
-  );
-  nextGemId += newGems.length;
-
-  sideGems.push(...newGems);
-  const newestCard = newCards.at(-1);
-  renderDeck(newestCard?.id || selectedCardId);
-  renderSideRuneStones();
-  setStatus("");
+  updatePhaseChrome();
+  setStatus("Socket matching rune stones into your cards, then start combat.");
 }
 
 initializeSettings();
 
 newGameButton.addEventListener("click", startNewGame);
+startCombatButton.addEventListener("click", startCombat);
 endTurnButton.addEventListener("click", endTurn);
+endCombatButton.addEventListener("click", endCombat);
 settingsInGameButton.addEventListener("click", openSettings);
 settingsCloseButton.addEventListener("click", closeSettings);
 settingsPanel.addEventListener("click", (event) => {
@@ -660,7 +865,7 @@ settingsPanel.addEventListener("change", (event) => {
   if (event.target.dataset.weightKey) syncLinkedWeightInputs(event.target);
   syncSettingsFromControls(false);
   writeSettingsToControls();
-  settingsNote.textContent = "Saved · applies on next New game / End turn";
+  settingsNote.textContent = "Saved · applies on next New game, Start combat, or End combat";
 });
 resetSettingsButton.addEventListener("click", () => {
   gameSettings = structuredClone(DEFAULT_GAME_SETTINGS);
@@ -677,7 +882,9 @@ async function initializeGame() {
 initializeGame()
   .catch((error) => {
     newGameButton.disabled = true;
+    startCombatButton.disabled = true;
     endTurnButton.disabled = true;
+    endCombatButton.disabled = true;
     setStatus(error.message);
     console.error(error);
   });
