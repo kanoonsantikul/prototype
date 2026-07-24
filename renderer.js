@@ -187,7 +187,7 @@ function drawCombat(canvas, context, loadedAssets, enemy) {
     heroCenterX,
     baselineY,
     COMBAT_FIGHTER_HEIGHT,
-    "Hero",
+    HERO_NAME,
   );
 
   if (enemy?.image) {

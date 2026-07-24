@@ -600,6 +600,7 @@ button.primary:hover {
   width: min(100cqw, calc(100cqh * 2 / 3));
   height: min(100cqh, calc(100cqw * 3 / 2));
   border-radius: 12px;
+  touch-action: none;
   filter: drop-shadow(0 20px 28px rgb(0 0 0 / 55%)) drop-shadow(0 0 20px rgb(45 140 95 / 15%));
 }
 
@@ -760,23 +761,37 @@ button.primary:hover {
   word-break: break-word;
 }
 
-.rune-drag-preview {
+.rune-drag-preview,
+.card-drag-preview {
   position: fixed;
   z-index: 1000;
-  width: 96px;
-  height: 96px;
   pointer-events: none;
   opacity: 0.92;
   transform: translate(-50%, -50%) scale(0.96);
   filter: drop-shadow(0 0 22px var(--accent-glow));
 }
-body.is-dragging-stone { cursor: grabbing; user-select: none; }
+.rune-drag-preview {
+  width: 96px;
+  height: 96px;
+}
+.card-drag-preview {
+  width: 92px;
+  height: 138px;
+  border-radius: 8px;
+  box-shadow: 0 12px 28px rgb(0 0 0 / 45%);
+}
+body.is-dragging-stone,
+body.is-dragging-card { cursor: grabbing; user-select: none; }
+.deck-card.is-dragging,
+#active-card.is-dragging {
+  opacity: 0.45;
+}
 
 .combat-panel {
   min-width: 0;
   padding: 14px 12px;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  grid-template-rows: auto auto minmax(0, 1fr) auto auto;
   gap: 10px;
 }
 .combat-panel-header {
@@ -791,7 +806,49 @@ body.is-dragging-stone { cursor: grabbing; user-select: none; }
 .combat-turn-label {
   letter-spacing: 0.08em;
 }
+.combat-energy {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.combat-energy[hidden] {
+  display: none !important;
+}
+.energy-token {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  border: 1px solid rgb(110 220 160 / 18%);
+  border-radius: 50%;
+  background: rgb(0 0 0 / 28%);
+  box-shadow: 0 0 14px rgb(0 0 0 / 28%);
+  overflow: hidden;
+}
+.energy-token canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.energy-token-count {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 1.05rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-shadow:
+    0 0 6px rgb(0 0 0 / 90%),
+    0 1px 2px rgb(0 0 0 / 95%),
+    0 0 12px rgb(0 0 0 / 70%);
+  pointer-events: none;
+}
 .combat-stage {
+  position: relative;
   min-height: 0;
   min-width: 0;
   display: grid;
@@ -799,10 +856,46 @@ body.is-dragging-stone { cursor: grabbing; user-select: none; }
   overflow: hidden;
   container-type: size;
   border-radius: var(--radius-sm);
+  border: 1px solid transparent;
   background:
     radial-gradient(ellipse at 30% 55%, rgb(20 60 45 / 40%) 0%, transparent 55%),
     radial-gradient(ellipse at 70% 45%, rgb(60 25 30 / 35%) 0%, transparent 55%),
     rgb(0 0 0 / 22%);
+  transition: border-color var(--ease), box-shadow var(--ease), background var(--ease);
+}
+.combat-stage.is-drop-hover {
+  border-color: rgb(110 220 160 / 45%);
+  box-shadow: inset 0 0 0 1px rgb(93 255 176 / 18%), 0 0 24px rgb(45 140 95 / 18%);
+}
+.combat-stage.is-drop-valid {
+  border-color: rgb(93 255 176 / 70%);
+  box-shadow: inset 0 0 0 1px rgb(93 255 176 / 28%), 0 0 28px rgb(93 255 176 / 22%);
+}
+.combat-stage.is-drop-invalid {
+  border-color: rgb(255 107 122 / 65%);
+  box-shadow: inset 0 0 0 1px rgb(255 107 122 / 22%), 0 0 24px rgb(255 107 122 / 18%);
+}
+.combat-drop-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 10px;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 45%);
+  color: var(--soft);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--ease);
+  white-space: nowrap;
+}
+.combat-stage.is-drop-hover .combat-drop-hint,
+.game-board.phase-combat.is-dragging-card .combat-drop-hint {
+  opacity: 0.95;
 }
 #combat-canvas {
   display: block;
@@ -810,6 +903,7 @@ body.is-dragging-stone { cursor: grabbing; user-select: none; }
   height: min(100cqh, calc(100cqw * 5 / 8));
   border-radius: 10px;
   filter: drop-shadow(0 12px 18px rgb(0 0 0 / 45%));
+  pointer-events: none;
 }
 
 .combat-fighters {
@@ -953,6 +1047,7 @@ body.is-dragging-stone { cursor: grabbing; user-select: none; }
   padding: 6px;
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
+  touch-action: none;
   background: linear-gradient(180deg, #0f241c 0%, #0a1812 100%);
   text-align: left;
   box-shadow: none;

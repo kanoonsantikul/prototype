@@ -13,12 +13,14 @@ const settingsNote = document.querySelector("#settings-note");
 const startCardCountInput = document.querySelector("#start-card-count");
 const startStoneCountInput = document.querySelector("#start-stone-count");
 const combatHandSizeInput = document.querySelector("#combat-hand-size");
+const energyPerTurnInput = document.querySelector("#energy-per-turn");
 const rewardCardCountInput = document.querySelector("#reward-card-count");
 const rewardStoneCountInput = document.querySelector("#reward-stone-count");
 const socketCountWeights = document.querySelector("#socket-count-weights");
 const socketRuneWeights = document.querySelector("#socket-rune-weights");
 const stoneTypeWeights = document.querySelector("#stone-type-weights");
 const stoneRuneWeights = document.querySelector("#stone-rune-weights");
+const energyColorWeights = document.querySelector("#energy-color-weights");
 const phaseEyebrow = document.querySelector("#phase-eyebrow");
 const phaseTitle = document.querySelector("#phase-title");
 const gameStatus = document.querySelector("#game-status");
@@ -35,6 +37,8 @@ const runeStoneList = document.querySelector("#rune-stones");
 const stoneCount = document.querySelector("#stone-count");
 const combatCanvas = document.querySelector("#combat-canvas");
 const combatContext = combatCanvas.getContext("2d");
+const combatDropZone = document.querySelector("#combat-drop-zone");
+const combatEnergyList = document.querySelector("#combat-energy");
 const combatTurnLabel = document.querySelector("#combat-turn-label");
 const heroNameLabel = document.querySelector("#hero-name");
 const enemyNameLabel = document.querySelector("#enemy-name");
@@ -51,16 +55,20 @@ let drawPile = [];
 let discardPile = [];
 let hand = [];
 let sideGems = [];
+let combatEnergy = emptyEnergyCounts();
 let currentEnemy = null;
 let combatTurn = 0;
 let selectedCardId = null;
 let nextCardId = 1;
 let nextGemId = 1;
 let draggingGemId = null;
+let draggingCardId = null;
+let draggingCardSource = null;
 let draggingPointerId = null;
 let draggingToken = null;
 let dragPreview = null;
 let dropTarget = null;
+let combatDropHover = false;
 
 function isDeckBuilding() {
   return phase === PHASE_DECK_BUILDING;
@@ -219,18 +227,21 @@ function syncSettingsFromControls(announce = true) {
     startCardCount: readBoundedInteger(startCardCountInput, DEFAULT_GAME_SETTINGS.startCardCount),
     startStoneCount: readBoundedInteger(startStoneCountInput, DEFAULT_GAME_SETTINGS.startStoneCount),
     combatHandSize: readBoundedInteger(combatHandSizeInput, DEFAULT_GAME_SETTINGS.combatHandSize),
+    energyPerTurn: readBoundedInteger(energyPerTurnInput, DEFAULT_GAME_SETTINGS.energyPerTurn),
     rewardCardCount: readBoundedInteger(rewardCardCountInput, DEFAULT_GAME_SETTINGS.rewardCardCount),
     rewardStoneCount: readBoundedInteger(rewardStoneCountInput, DEFAULT_GAME_SETTINGS.rewardStoneCount),
     socketCountWeights: readWeightControls(socketCountWeights),
     socketRuneWeights: readWeightControls(socketRuneWeights),
     stoneTypeWeights: readWeightControls(stoneTypeWeights),
     stoneRuneWeights: readWeightControls(stoneRuneWeights),
+    energyColorWeights: readWeightControls(energyColorWeights),
   };
 
   updateWeightPercentages(socketCountWeights);
   updateWeightPercentages(socketRuneWeights);
   updateWeightPercentages(stoneTypeWeights);
   updateWeightPercentages(stoneRuneWeights);
+  updateWeightPercentages(energyColorWeights);
 
   if (announce) {
     settingsNote.textContent = "Saved · applies on next New game, Start combat, or End combat";
@@ -241,6 +252,7 @@ function writeSettingsToControls() {
   startCardCountInput.value = gameSettings.startCardCount;
   startStoneCountInput.value = gameSettings.startStoneCount;
   combatHandSizeInput.value = gameSettings.combatHandSize;
+  energyPerTurnInput.value = gameSettings.energyPerTurn;
   rewardCardCountInput.value = gameSettings.rewardCardCount;
   rewardStoneCountInput.value = gameSettings.rewardStoneCount;
 
@@ -249,6 +261,7 @@ function writeSettingsToControls() {
     [socketRuneWeights, "socketRuneWeights"],
     [stoneTypeWeights, "stoneTypeWeights"],
     [stoneRuneWeights, "stoneRuneWeights"],
+    [energyColorWeights, "energyColorWeights"],
   ]) {
     for (const row of container.querySelectorAll(".weight-setting")) {
       const key = row.querySelector("input").dataset.weightKey;
@@ -311,6 +324,16 @@ function initializeSettings() {
     })),
     "stoneRuneWeights",
   );
+  createWeightControls(
+    energyColorWeights,
+    RUNE_STONE_ASSETS.map((stone) => ({
+      key: stone.name,
+      label: stone.name[0].toUpperCase() + stone.name.slice(1),
+      icon: stone.source,
+      showLabel: true,
+    })),
+    "energyColorWeights",
+  );
   writeSettingsToControls();
 }
 
@@ -351,12 +374,20 @@ function updatePhaseChrome() {
   if (deckBuilding) {
     deckCount.textContent = `${deck.length} cards · ${sideGems.length} stones`;
   } else {
-    deckCount.textContent = `Hand ${hand.length} · Draw ${drawPile.length} · Discard ${discardPile.length}`;
+    deckCount.textContent = `Hand ${hand.length} · Energy ${totalEnergy(combatEnergy)} · Draw ${drawPile.length} · Discard ${discardPile.length}`;
   }
+
+  renderCombatEnergy();
 }
 
 function redrawActiveCard() {
-  drawActiveCard(selectedCard(), activeCardCanvas, activeCardContext, loadedAssets, dropTarget);
+  const card = selectedCard();
+  if (!card) {
+    activeCardContext.setTransform(1, 0, 0, 1, 0, 0);
+    activeCardContext.clearRect(0, 0, activeCardCanvas.width, activeCardCanvas.height);
+    return;
+  }
+  drawActiveCard(card, activeCardCanvas, activeCardContext, loadedAssets, dropTarget);
 }
 
 function selectRandomEnemy() {
@@ -370,7 +401,7 @@ function selectRandomEnemy() {
 }
 
 function resetFighterTrackers() {
-  heroNameLabel.textContent = "Hero";
+  heroNameLabel.textContent = HERO_NAME;
   enemyNameLabel.textContent = currentEnemy?.label || "Enemy";
   heroHpInput.value = DEFAULT_FIGHTER_STATS.heroHp;
   enemyHpInput.value = DEFAULT_FIGHTER_STATS.enemyHp;
@@ -379,13 +410,80 @@ function resetFighterTrackers() {
 }
 
 function updateFighterLabels() {
-  heroNameLabel.textContent = "Hero";
+  heroNameLabel.textContent = HERO_NAME;
   enemyNameLabel.textContent = currentEnemy?.label || "Enemy";
 }
 
 function redrawCombat() {
   updateFighterLabels();
   drawCombat(combatCanvas, combatContext, loadedAssets, currentEnemy);
+}
+
+function clearCombatDropHover() {
+  combatDropHover = false;
+  combatDropZone.classList.remove("is-drop-hover", "is-drop-valid", "is-drop-invalid");
+}
+
+function setCombatDropHover(isHovering, isValid = false) {
+  combatDropHover = isHovering;
+  combatDropZone.classList.toggle("is-drop-hover", isHovering);
+  combatDropZone.classList.toggle("is-drop-valid", isHovering && isValid);
+  combatDropZone.classList.toggle("is-drop-invalid", isHovering && !isValid);
+}
+
+function isPointInCombatDropZone(clientX, clientY) {
+  const bounds = combatDropZone.getBoundingClientRect();
+  return clientX >= bounds.left
+    && clientX <= bounds.right
+    && clientY >= bounds.top
+    && clientY <= bounds.bottom;
+}
+
+function stoneImageForColor(color) {
+  return loadedAssets?.runeStones?.find((stone) => stone.name === color) || null;
+}
+
+function renderCombatEnergy() {
+  const showEnergy = isCombat();
+  combatEnergyList.hidden = !showEnergy;
+
+  if (!showEnergy || !loadedAssets) {
+    combatEnergyList.replaceChildren();
+    return;
+  }
+
+  const fragment = document.createDocumentFragment();
+
+  for (const color of ENERGY_COLORS) {
+    const count = combatEnergy[color] || 0;
+    const stone = stoneImageForColor(color);
+    const token = document.createElement("div");
+    const canvas = document.createElement("canvas");
+    const label = document.createElement("span");
+
+    token.className = "energy-token";
+    token.dataset.color = color;
+    token.setAttribute("aria-label", `${count} ${color} energy`);
+    token.title = `${count} ${color}`;
+
+    canvas.width = 128;
+    canvas.height = 128;
+    canvas.setAttribute("aria-hidden", "true");
+
+    if (stone?.image) {
+      const context = canvas.getContext("2d");
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(stone.image, 0, 0, canvas.width, canvas.height);
+    }
+
+    label.className = "energy-token-count";
+    label.textContent = String(count);
+
+    token.append(canvas, label);
+    fragment.append(token);
+  }
+
+  combatEnergyList.replaceChildren(fragment);
 }
 
 function clearDropFeedback() {
@@ -412,9 +510,14 @@ function resetPointerDrag() {
   }
 
   draggingToken?.classList.remove("is-dragging");
+  activeCardCanvas.classList.remove("is-dragging");
   dragPreview?.remove();
-  document.body.classList.remove("is-dragging-stone");
+  document.body.classList.remove("is-dragging-stone", "is-dragging-card");
+  gameBoard.classList.remove("is-dragging-card");
+  clearCombatDropHover();
   draggingGemId = null;
+  draggingCardId = null;
+  draggingCardSource = null;
   draggingPointerId = null;
   draggingToken = null;
   dragPreview = null;
@@ -500,6 +603,7 @@ function placeGemOnCard(gem, card, socketIndex) {
 function handleGemPointerDown(event, gem) {
   if (!isDeckBuilding()) return;
   if (event.isPrimary === false || (event.pointerType === "mouse" && event.button !== 0)) return;
+  if (draggingGemId || draggingCardId) return;
 
   event.preventDefault();
   draggingGemId = gem.id;
@@ -527,7 +631,7 @@ function handleGemPointerMove(event) {
 }
 
 function handleGemPointerUp(event) {
-  if (event.pointerId !== draggingPointerId) return;
+  if (event.pointerId !== draggingPointerId || !draggingGemId) return;
 
   event.preventDefault();
   const gem = sideGems.find((candidate) => candidate.id === draggingGemId);
@@ -547,9 +651,108 @@ function handleGemPointerUp(event) {
 }
 
 function handleGemPointerCancel(event) {
-  if (event.pointerId !== draggingPointerId) return;
+  if (event.pointerId !== draggingPointerId || !draggingGemId) return;
   resetPointerDrag();
   clearDropFeedback();
+}
+
+function createCardDragPreview(card) {
+  const preview = document.createElement("canvas");
+  preview.width = DECK_THUMBNAIL_WIDTH;
+  preview.height = DECK_THUMBNAIL_HEIGHT;
+  preview.className = "card-drag-preview";
+  drawCardSurface(card, preview, preview.getContext("2d"), loadedAssets);
+  return preview;
+}
+
+function handleCardPointerDown(event, card, source) {
+  if (!isCombat()) return;
+  if (event.isPrimary === false || (event.pointerType === "mouse" && event.button !== 0)) return;
+  if (draggingGemId || draggingCardId) return;
+
+  event.preventDefault();
+  selectCard(card.id, false);
+
+  draggingCardId = card.id;
+  draggingCardSource = source;
+  draggingPointerId = event.pointerId;
+  draggingToken = event.currentTarget;
+  event.currentTarget.classList.add("is-dragging");
+  event.currentTarget.setPointerCapture(event.pointerId);
+
+  dragPreview = createCardDragPreview(card);
+  document.body.append(dragPreview);
+  document.body.classList.add("is-dragging-card");
+  gameBoard.classList.add("is-dragging-card");
+  moveDragPreview(event.clientX, event.clientY);
+  updateCardPlayDropFeedback(event.clientX, event.clientY);
+}
+
+function updateCardPlayDropFeedback(clientX, clientY) {
+  if (!draggingCardId) return;
+
+  const card = hand.find((candidate) => candidate.id === draggingCardId);
+  if (!card || !isPointInCombatDropZone(clientX, clientY)) {
+    clearCombatDropHover();
+    return;
+  }
+
+  const cost = cardEnergyCost(card);
+  setCombatDropHover(true, canPayEnergyCost(combatEnergy, cost));
+}
+
+function handleCardPointerMove(event) {
+  if (event.pointerId !== draggingPointerId || !draggingCardId) return;
+
+  event.preventDefault();
+  moveDragPreview(event.clientX, event.clientY);
+  updateCardPlayDropFeedback(event.clientX, event.clientY);
+}
+
+function playCardFromHand(card) {
+  const cost = cardEnergyCost(card);
+
+  if (!canPayEnergyCost(combatEnergy, cost)) {
+    setStatus(`Not enough energy (${formatEnergyCost(cost)}).`);
+    return false;
+  }
+
+  combatEnergy = spendEnergyCost(combatEnergy, cost);
+  hand = hand.filter((candidate) => candidate.id !== card.id);
+  discardPile.push(card);
+  clearCardUiBindings([card]);
+
+  renderCombatEnergy();
+  renderCardBrowser(selectedCardId === card.id ? hand[0]?.id : selectedCardId);
+  updatePhaseChrome();
+  setStatus(`Played card for ${formatEnergyCost(cost)}.`);
+  return true;
+}
+
+function handleCardPointerUp(event) {
+  if (event.pointerId !== draggingPointerId || !draggingCardId) return;
+
+  event.preventDefault();
+  const cardId = draggingCardId;
+  const overCombat = isPointInCombatDropZone(event.clientX, event.clientY);
+  resetPointerDrag();
+
+  const card = hand.find((candidate) => candidate.id === cardId);
+  if (!card || !overCombat) return;
+
+  playCardFromHand(card);
+}
+
+function handleCardPointerCancel(event) {
+  if (event.pointerId !== draggingPointerId || !draggingCardId) return;
+  resetPointerDrag();
+}
+
+function handleActiveCardPointerDown(event) {
+  if (!isCombat()) return;
+  const card = selectedCard();
+  if (!card) return;
+  handleCardPointerDown(event, card, "preview");
 }
 
 function renderSideRuneStones() {
@@ -611,9 +814,18 @@ function renderCardMods(card = selectedCard()) {
   cardModsList.classList.toggle("is-empty", mods.length === 0);
 }
 
+function cardMetaText(card) {
+  if (!card) return "";
+  if (!isCombat()) return cardProgress(card);
+
+  const cost = cardEnergyCost(card);
+  const affordable = canPayEnergyCost(combatEnergy, cost);
+  return `${formatEnergyCost(cost)}${affordable ? "" : " · lacking"}`;
+}
+
 function updateActiveCardDetails(card = selectedCard()) {
-  activeCardDetails.textContent = card ? cardProgress(card) : "";
-  if (card?.deckMeta) card.deckMeta.textContent = cardProgress(card);
+  activeCardDetails.textContent = cardMetaText(card);
+  if (card?.deckMeta) card.deckMeta.textContent = cardMetaText(card);
   renderCardMods(card);
 }
 
@@ -653,7 +865,12 @@ function renderCardBrowser(preferredCardId = selectedCardId) {
     button.type = "button";
     button.className = "deck-card";
     button.setAttribute("aria-pressed", "false");
-    button.setAttribute("aria-label", `Select ${card.name} with ${card.sockets.length} sockets`);
+    button.setAttribute(
+      "aria-label",
+      isCombat()
+        ? `Play or select ${card.name}; cost ${formatEnergyCost(cardEnergyCost(card))}`
+        : `Select ${card.name} with ${card.sockets.length} sockets`,
+    );
 
     thumbnail.width = DECK_THUMBNAIL_WIDTH;
     thumbnail.height = DECK_THUMBNAIL_HEIGHT;
@@ -663,7 +880,7 @@ function renderCardBrowser(preferredCardId = selectedCardId) {
     name.className = "deck-card-name";
     name.textContent = "";
     meta.className = "deck-card-meta";
-    meta.textContent = cardProgress(card);
+    meta.textContent = cardMetaText(card);
 
     card.deckButton = button;
     card.deckMeta = meta;
@@ -671,6 +888,12 @@ function renderCardBrowser(preferredCardId = selectedCardId) {
     card.thumbnailContext = thumbnail.getContext("2d");
 
     button.addEventListener("click", () => selectCard(card.id));
+    if (isCombat()) {
+      button.addEventListener("pointerdown", (event) => handleCardPointerDown(event, card, "hand"));
+      button.addEventListener("pointermove", handleCardPointerMove);
+      button.addEventListener("pointerup", handleCardPointerUp);
+      button.addEventListener("pointercancel", handleCardPointerCancel);
+    }
     button.append(thumbnail, meta);
     fragment.append(button);
   });
@@ -716,6 +939,7 @@ function beginCombatTurn() {
   discardPile.push(...hand);
   hand = [];
   combatTurn += 1;
+  combatEnergy = createTurnEnergy(gameSettings.energyPerTurn, gameSettings);
 
   const drawn = drawCards(gameSettings.combatHandSize);
   hand = drawn;
@@ -723,8 +947,8 @@ function beginCombatTurn() {
   updatePhaseChrome();
   setStatus(
     drawn.length > 0
-      ? `Drew ${drawn.length} card${drawn.length === 1 ? "" : "s"}. Cards are locked during combat.`
-      : "No cards left to draw.",
+      ? `Turn ${combatTurn}: drew ${drawn.length}, gained ${totalEnergy(combatEnergy)} energy. Drag a card onto combat to play it.`
+      : `Turn ${combatTurn}: no cards left to draw. Gained ${totalEnergy(combatEnergy)} energy.`,
   );
 }
 
@@ -737,6 +961,7 @@ function startCombat() {
   combatTurn = 0;
   hand = [];
   discardPile = [];
+  combatEnergy = emptyEnergyCounts();
   drawPile = shuffled(deck);
   selectRandomEnemy();
   resetFighterTrackers();
@@ -763,6 +988,7 @@ function endCombat() {
   hand = [];
   drawPile = [];
   discardPile = [];
+  combatEnergy = emptyEnergyCounts();
   combatTurn = 0;
   phase = PHASE_DECK_BUILDING;
 
@@ -813,6 +1039,7 @@ function startNewGame() {
   hand = [];
   drawPile = [];
   discardPile = [];
+  combatEnergy = emptyEnergyCounts();
   deck = Array.from(
     { length: gameSettings.startCardCount },
     (_, index) => {
@@ -842,6 +1069,11 @@ function startNewGame() {
 }
 
 initializeSettings();
+
+activeCardCanvas.addEventListener("pointerdown", handleActiveCardPointerDown);
+activeCardCanvas.addEventListener("pointermove", handleCardPointerMove);
+activeCardCanvas.addEventListener("pointerup", handleCardPointerUp);
+activeCardCanvas.addEventListener("pointercancel", handleCardPointerCancel);
 
 newGameButton.addEventListener("click", startNewGame);
 startCombatButton.addEventListener("click", startCombat);

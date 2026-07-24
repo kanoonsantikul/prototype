@@ -36,10 +36,11 @@ const RUNE_STONE_ASSETS = [
   { name: "green", source: "game-assets/rune-stones/rune-stone-green.png" },
   { name: "blue", source: "game-assets/rune-stones/rune-stone-blue.png" },
 ];
+const HERO_NAME = "Kaelen Emberwright";
 const ENEMY_ASSETS = [
-  { name: "minion", label: "Minion", source: "game-assets/characters/enemy-minion.png" },
-  { name: "speed", label: "Speed", source: "game-assets/characters/enemy-speed.png" },
-  { name: "tank", label: "Tank", source: "game-assets/characters/enemy-tank.png" },
+  { name: "minion", label: "Skitter-Vex", source: "game-assets/characters/enemy-minion.png" },
+  { name: "speed", label: "Whisperblade Nyx", source: "game-assets/characters/enemy-speed.png" },
+  { name: "tank", label: "Ironhowl Bront", source: "game-assets/characters/enemy-tank.png" },
 ];
 const SOCKET_COUNT_OPTIONS = [1, 2, 3, 4, 5, 6, 7];
 const PHASE_DECK_BUILDING = "deck-building";
@@ -52,14 +53,18 @@ const DEFAULT_FIGHTER_STATS = {
   enemyNotes: "",
 };
 
+const ENERGY_COLORS = RUNE_STONE_ASSETS.map((stone) => stone.name);
+
 const DEFAULT_GAME_SETTINGS = {
   startCardCount: 5,
   startStoneCount: 5,
   combatHandSize: 3,
+  energyPerTurn: 3,
   rewardCardCount: 1,
   rewardStoneCount: 3,
   socketCountWeights: Object.fromEntries(SOCKET_COUNT_OPTIONS.map((count) => [count, 1])),
   socketRuneWeights: Object.fromEntries(SOCKET_RUNE_ASSETS.map((rune) => [rune.name, 1])),
   stoneTypeWeights: Object.fromEntries(RUNE_STONE_ASSETS.map((stone) => [stone.name, 1])),
   stoneRuneWeights: Object.fromEntries(RADIANT_RUNE_ASSETS.map((rune) => [rune.name, 1])),
+  energyColorWeights: Object.fromEntries(ENERGY_COLORS.map((color) => [color, 1])),
 };

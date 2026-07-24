@@ -61,6 +61,17 @@
               </div>
             </div>
             <div class="count-setting">
+              <label class="count-setting-label" for="energy-per-turn">
+                <span class="count-setting-title">Energy per turn</span>
+                <span class="count-setting-hint">Colored energy gained each combat turn</span>
+              </label>
+              <div class="stepper">
+                <button type="button" class="stepper-btn" data-stepper-for="energy-per-turn" data-delta="-1" aria-label="Decrease energy per turn">−</button>
+                <input id="energy-per-turn" type="number" min="0" max="20" step="1" value="3" inputmode="numeric">
+                <button type="button" class="stepper-btn" data-stepper-for="energy-per-turn" data-delta="1" aria-label="Increase energy per turn">+</button>
+              </div>
+            </div>
+            <div class="count-setting">
               <label class="count-setting-label" for="reward-card-count">
                 <span class="count-setting-title">Reward cards</span>
                 <span class="count-setting-hint">Cards gained after combat</span>
@@ -116,6 +127,10 @@
               <fieldset class="settings-group">
                 <legend>Stone rune</legend>
                 <div id="stone-rune-weights" class="weight-list"></div>
+              </fieldset>
+              <fieldset class="settings-group">
+                <legend>Combat energy color</legend>
+                <div id="energy-color-weights" class="weight-list"></div>
               </fieldset>
             </div>
           </section>
@@ -179,15 +194,17 @@
             <h2>Combat</h2>
             <span id="combat-turn-label" class="combat-turn-label" hidden>Turn 0</span>
           </header>
-          <div class="combat-stage">
+          <div id="combat-energy" class="combat-energy" aria-label="Turn energy" hidden></div>
+          <div class="combat-stage" id="combat-drop-zone">
             <canvas id="combat-canvas" width="1024" height="640">
               Your browser does not support HTML canvas.
             </canvas>
+            <p class="combat-drop-hint">Drag a card here to play it</p>
           </div>
           <div class="combat-fighters" aria-label="Fighter trackers">
             <article class="fighter-card" aria-label="Hero tracker">
               <header class="fighter-card-header">
-                <h3 id="hero-name">Hero</h3>
+                <h3 id="hero-name">Kaelen Emberwright</h3>
                 <label class="fighter-hp-field" for="hero-hp">
                   <span>HP</span>
                   <input id="hero-hp" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" value="20" aria-label="Hero HP">
