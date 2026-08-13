@@ -1,0 +1,107 @@
+.rune-tray {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 10px;
+  justify-items: stretch;
+  align-content: start;
+  padding: 14px 12px;
+}
+.rune-tray-header { width: 100%; display: grid; justify-items: center; gap: 4px; }
+.rune-tray h2 { font-size: 0.78rem; letter-spacing: 0.14em; }
+
+.rune-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-content: start;
+  width: 100%;
+  min-height: 0;
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.rune-stone-item {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  width: 100%;
+  min-height: 76px;
+  height: auto;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: rgb(0 0 0 / 22%);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  transition: border-color var(--ease), background var(--ease), box-shadow var(--ease), opacity var(--ease), transform var(--ease);
+}
+.rune-stone-item:hover {
+  border-color: rgb(110 220 160 / 35%);
+  background: rgb(20 50 35 / 35%);
+  box-shadow: 0 0 16px rgb(45 140 95 / 18%);
+}
+.rune-stone-item.is-dragging {
+  cursor: grabbing;
+  opacity: 0.45;
+  transform: scale(0.98);
+  border-color: rgb(110 220 160 / 45%);
+}
+
+.rune-token {
+  display: block;
+  width: 64px;
+  height: 64px;
+  max-width: none;
+  flex-shrink: 0;
+  pointer-events: none;
+  -webkit-user-drag: none;
+  filter: drop-shadow(0 8px 12px rgb(0 0 0 / 50%));
+  transition: filter var(--ease), transform var(--ease);
+}
+.rune-stone-item:hover .rune-token {
+  filter: drop-shadow(0 0 16px var(--accent-glow)) drop-shadow(0 8px 12px rgb(0 0 0 / 40%));
+  transform: scale(1.06);
+}
+
+.rune-mod {
+  min-width: 0;
+  align-self: center;
+  color: var(--text);
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+  overflow: visible;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.rune-drag-preview,
+.card-drag-preview {
+  position: fixed;
+  z-index: 1000;
+  pointer-events: none;
+  opacity: 0.92;
+  transform: translate(-50%, -50%) scale(0.96);
+  filter: drop-shadow(0 0 22px var(--accent-glow));
+}
+.rune-drag-preview {
+  width: 96px;
+  height: 96px;
+}
+.card-drag-preview {
+  width: 92px;
+  height: 138px;
+  border-radius: 8px;
+  box-shadow: 0 12px 28px rgb(0 0 0 / 45%);
+}
+body.is-dragging-stone,
+body.is-dragging-card { cursor: grabbing; user-select: none; }
+.deck-card.is-dragging,
+#active-card.is-dragging {
+  opacity: 0.45;
+}

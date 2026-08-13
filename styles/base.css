@@ -1,0 +1,153 @@
+:root {
+  color-scheme: dark;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  --bg: #050a08;
+  --border: rgb(72 180 130 / 22%);
+  --border-strong: rgb(90 210 150 / 38%);
+  --text: #e8f7ef;
+  --muted: #8fb8a4;
+  --soft: #b8e0cc;
+  --accent: #5dffb0;
+  --accent-dim: #2a9a68;
+  --accent-glow: rgb(93 255 176 / 35%);
+  --danger: #ff6b7a;
+  --danger-glow: rgb(255 107 122 / 40%);
+  --btn: #134532;
+  --btn-hover: #1a5c42;
+  --btn-border: #3d9a6e;
+  --input-bg: #0d1f18;
+  --input-border: #2a5c45;
+  --shadow: 0 20px 40px rgb(0 0 0 / 40%), 0 0 0 1px rgb(72 180 130 / 8%);
+  --shadow-glow: 0 0 32px rgb(45 140 95 / 18%);
+  --radius: 16px;
+  --radius-sm: 10px;
+  --panel-grad: linear-gradient(165deg, rgb(10 26 20 / 85%) 0%, rgb(6 16 12 / 90%) 100%);
+  --settings-grad: linear-gradient(165deg, rgb(10 28 22 / 97%) 0%, rgb(5 16 12 / 99%) 100%);
+  --ease: 150ms ease;
+  background: var(--bg);
+  color: var(--text);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+[hidden] { display: none !important; }
+h1, h2, p, legend { margin: 0; }
+
+body {
+  display: grid;
+  height: 100dvh;
+  padding: 14px;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgb(28 90 60 / 28%) 0%, transparent 55%),
+    radial-gradient(circle at 15% 85%, rgb(20 70 50 / 20%) 0%, transparent 40%),
+    radial-gradient(circle at 85% 70%, rgb(15 55 45 / 18%) 0%, transparent 35%),
+    var(--bg);
+}
+
+main {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  margin: 0 auto;
+  display: grid;
+  overflow: hidden;
+}
+
+button {
+  border: 1px solid var(--btn-border);
+  border-radius: var(--radius-sm);
+  padding: 12px 20px;
+  color: var(--text);
+  background: linear-gradient(180deg, #1a5c42 0%, var(--btn) 100%);
+  font: 700 1rem/normal inherit;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 25%), inset 0 1px 0 rgb(255 255 255 / 8%);
+  transition: background var(--ease), border-color var(--ease), box-shadow var(--ease), transform 120ms ease;
+}
+button:hover {
+  background: linear-gradient(180deg, #227a55 0%, var(--btn-hover) 100%);
+  border-color: var(--accent-dim);
+  box-shadow: 0 4px 14px rgb(0 0 0 / 30%), 0 0 16px var(--accent-glow);
+}
+button:active { transform: translateY(1px); }
+button:disabled { cursor: wait; opacity: 0.5; box-shadow: none; }
+button.primary {
+  border-color: var(--accent);
+  background: linear-gradient(180deg, #2a8a60 0%, #1a6048 100%);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 25%), 0 0 18px rgb(93 255 176 / 15%), inset 0 1px 0 rgb(255 255 255 / 10%);
+}
+button.primary:hover {
+  background: linear-gradient(180deg, #34a870 0%, #227a55 100%);
+  box-shadow: 0 4px 16px rgb(0 0 0 / 30%), 0 0 28px var(--accent-glow);
+}
+
+.settings-panel, .game-board {
+  grid-area: 1 / 1;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+}
+.game-actions, .settings-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.game-actions { align-items: center; justify-content: flex-end; }
+.game-actions button { padding: 10px 16px; font-size: 0.88rem; }
+#game-status { color: var(--soft); font-size: 0.82rem; white-space: nowrap; }
+
+.settings-header, .settings-footer,
+.deck-header, .active-card-header, .deck-browser-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.settings-header h2, .deck-header h1 {
+  background: linear-gradient(135deg, var(--text) 0%, var(--accent) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.settings-eyebrow, .settings-group legend, .rune-tray h2, .combat-panel h2 {
+  color: var(--accent);
+  font-weight: 800;
+  text-transform: uppercase;
+  text-shadow: 0 0 10px var(--accent-glow);
+}
+
+.settings-body, .weight-list {
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-dim) transparent;
+}
+.settings-body::-webkit-scrollbar-thumb,
+.weight-list::-webkit-scrollbar-thumb {
+  background: var(--accent-dim);
+  border-radius: 999px;
+}
+
+.stepper input[type="number"],
+.weight-setting input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+  font: inherit;
+  color: var(--text);
+  text-align: center;
+}
+.stepper input[type="number"]::-webkit-outer-spin-button,
+.stepper input[type="number"]::-webkit-inner-spin-button,
+.weight-setting input[type="number"]::-webkit-outer-spin-button,
+.weight-setting input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.weight-setting-text, .deck-card-name, .deck-card-meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

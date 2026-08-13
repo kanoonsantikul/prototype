@@ -103,78 +103,65 @@ function createRandomCard(loaded, index, gameSettings, nextCardId) {
 }
 
 function createRandomGems(stoneAssets, runeAssets, mods, count, gameSettings, nextGemId) {
-  return Array.from({ length: count }, (_, index) => ({
-    id: `gem-${nextGemId + index}`,
-    stone: weightedRandomItem(
-      stoneAssets,
-      (stone) => gameSettings.stoneTypeWeights[stone.name],
-    ),
-    rune: weightedRandomItem(
-      runeAssets,
-      (candidate) => gameSettings.stoneRuneWeights[candidate.name],
-    ),
-    mod: randomItem(mods),
-  }));
+  return Array.from({ length: count }, (_, index) => {
+    const rolled = weightedRandomItem(mods, (entry) => entry.weight);
+    return {
+      id: `gem-${nextGemId + index}`,
+      stone: weightedRandomItem(
+        stoneAssets,
+        (stone) => gameSettings.stoneTypeWeights[stone.name],
+      ),
+      rune: weightedRandomItem(
+        runeAssets,
+        (candidate) => gameSettings.stoneRuneWeights[candidate.name],
+      ),
+      mod: rolled.text,
+      cost: Number.isFinite(rolled.cost) ? rolled.cost : 0,
+    };
+  });
 }
 
 function socketedMods(card) {
   return card.sockets
     .filter((socket) => socket.gem)
-    .map((socket) => socket.gem.mod);
+    .map((socket) => ({
+      text: socket.gem.mod,
+      cost: gemEnergyCost(socket.gem),
+    }));
 }
 
-function emptyEnergyCounts() {
-  return Object.fromEntries(ENERGY_COLORS.map((color) => [color, 0]));
+function gemEnergyCost(gem) {
+  const cost = Number(gem?.cost);
+  return Number.isFinite(cost) ? Math.max(0, cost) : 0;
 }
 
 function cardEnergyCost(card) {
-  const cost = emptyEnergyCounts();
-
-  for (const socket of card.sockets) {
-    if (!socket.gem) continue;
-    const color = socket.gem.stone?.name;
-    if (!(color in cost)) continue;
-    cost[color] += 1;
-  }
-
-  return cost;
-}
-
-function totalEnergy(counts) {
-  return ENERGY_COLORS.reduce((total, color) => total + (counts[color] || 0), 0);
+  return card.sockets.reduce((total, socket) => {
+    if (!socket.gem) return total;
+    return total + gemEnergyCost(socket.gem);
+  }, 0);
 }
 
 function canPayEnergyCost(available, cost) {
-  return ENERGY_COLORS.every((color) => (available[color] || 0) >= (cost[color] || 0));
+  return available >= cost;
 }
 
 function spendEnergyCost(available, cost) {
-  const next = { ...available };
-  for (const color of ENERGY_COLORS) {
-    next[color] = (next[color] || 0) - (cost[color] || 0);
-  }
-  return next;
+  return available - cost;
 }
 
-function createTurnEnergy(count, gameSettings) {
-  const energy = emptyEnergyCounts();
-
-  for (let index = 0; index < count; index += 1) {
-    const color = weightedRandomItem(
-      ENERGY_COLORS,
-      (candidate) => gameSettings.energyColorWeights[candidate],
-    );
-    energy[color] += 1;
-  }
-
-  return energy;
+function createTurnEnergy(count) {
+  return count;
 }
 
 function formatEnergyCost(cost) {
-  const parts = ENERGY_COLORS
-    .filter((color) => (cost[color] || 0) > 0)
-    .map((color) => `${cost[color]} ${color}`);
-  return parts.length > 0 ? parts.join(", ") : "free";
+  if (cost <= 0) return "free";
+  return `${cost} energy`;
+}
+
+function formatModLabel(mod, cost) {
+  const amount = Number.isFinite(cost) ? cost : 0;
+  return amount > 0 ? `${mod} (${amount})` : `${mod} (free)`;
 }
 
 function cardProgress(card) {

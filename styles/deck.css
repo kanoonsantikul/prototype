@@ -1,0 +1,53 @@
+.deck-browser {
+  min-width: 0;
+  padding: 10px 12px;
+  display: grid;
+  gap: 8px;
+}
+.deck-browser-header {
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 0 6px;
+}
+
+.card-list {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 96px;
+  gap: 10px;
+  overflow: hidden;
+  padding: 4px 2px 6px;
+}
+
+.deck-card {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding: 6px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  touch-action: none;
+  background: linear-gradient(180deg, #0f241c 0%, #0a1812 100%);
+  text-align: left;
+  box-shadow: none;
+  transition: border-color var(--ease), background var(--ease), transform var(--ease), box-shadow var(--ease);
+}
+.deck-card:hover {
+  border-color: transparent;
+  background: linear-gradient(180deg, #0f241c 0%, #0a1812 100%);
+  box-shadow: none;
+}
+.deck-card[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: linear-gradient(180deg, #1a4030 0%, #122820 100%);
+  box-shadow: 0 0 0 2px rgb(93 255 176 / 18%), 0 0 20px var(--accent-glow);
+}
+.deck-thumbnail {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 6px;
+  pointer-events: none;
+}
+.deck-card-name { font-size: 0.72rem; font-weight: 800; color: var(--text); }
+.deck-card-meta { color: var(--muted); font-size: 0.64rem; font-weight: 500; }

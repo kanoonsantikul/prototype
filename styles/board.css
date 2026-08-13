@@ -1,0 +1,180 @@
+/* Game board */
+.game-board {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 12px;
+}
+.deck-header { padding: 0 6px; gap: 10px; }
+.phase-heading {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.phase-eyebrow {
+  color: var(--accent);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-shadow: 0 0 10px var(--accent-glow);
+}
+.deck-header h1 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  background-image: linear-gradient(135deg, var(--text) 30%, var(--accent) 100%);
+}
+.deck-header button { padding: 8px 14px; font-size: 0.85rem; }
+.deck-header .primary { margin-left: auto; }
+#deck-count, #active-card-details, #stone-count, #card-browser-label, .combat-turn-label {
+  color: var(--soft);
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+#card-browser-label {
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.72rem;
+}
+
+.play-area {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 0.95fr);
+  gap: 14px;
+  overflow: hidden;
+}
+
+.game-board.phase-deck-building .combat-panel {
+  display: none;
+}
+
+.game-board.phase-combat .rune-tray {
+  display: none;
+}
+
+.active-card-panel, .rune-tray, .deck-browser, .combat-panel {
+  min-height: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel-grad);
+  box-shadow: var(--shadow), var(--shadow-glow);
+  backdrop-filter: blur(10px);
+  overflow: hidden;
+}
+
+.active-card-panel {
+  min-width: 0;
+  padding: 14px;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 10px;
+}
+.active-card-header h2 { font-size: 1.05rem; font-weight: 700; }
+
+.active-card-body {
+  min-height: 0;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(200px, 0.85fr);
+  gap: 14px;
+  overflow: hidden;
+}
+
+.active-card-stage {
+  min-height: 0;
+  min-width: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  container-type: size;
+  border-radius: var(--radius-sm);
+  background: radial-gradient(ellipse at 50% 40%, rgb(20 60 45 / 35%) 0%, transparent 70%);
+}
+
+#active-card {
+  display: block;
+  width: min(100cqw, calc(100cqh * 2 / 3));
+  height: min(100cqh, calc(100cqw * 3 / 2));
+  border-radius: 12px;
+  touch-action: none;
+  filter: drop-shadow(0 20px 28px rgb(0 0 0 / 55%)) drop-shadow(0 0 20px rgb(45 140 95 / 15%));
+}
+
+.card-mods-panel {
+  min-height: 0;
+  min-width: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: rgb(0 0 0 / 22%);
+}
+.card-mods-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.card-mods-header h3 {
+  margin: 0;
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-shadow: 0 0 10px var(--accent-glow);
+}
+#card-mod-count {
+  color: var(--soft);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+
+.card-mods-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.card-mods-list.is-empty::before {
+  content: "Socket stones to collect mods";
+  color: var(--soft);
+  font-size: 0.8rem;
+  font-style: italic;
+  line-height: 1.4;
+  opacity: 0.75;
+}
+.card-mod-item {
+  position: relative;
+  padding: 8px 10px 8px 28px;
+  border: 1px solid rgb(110 220 160 / 18%);
+  border-radius: 8px;
+  background: rgb(12 36 26 / 55%);
+  color: var(--text);
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.4;
+  word-break: break-word;
+}
+.card-mod-item::before {
+  content: counter(mod-item);
+  counter-increment: mod-item;
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  width: 1.2em;
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+.card-mods-list { counter-reset: mod-item; }

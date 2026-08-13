@@ -1,0 +1,78 @@
+/* Responsive */
+@media (max-width: 1100px) {
+  .settings-section--generation .count-settings { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .settings-columns { grid-template-columns: minmax(0, 1fr); }
+  /* Full-width stacked sections: put peer weight groups side by side. */
+  .settings-groups { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 860px) {
+  body { padding: 8px; }
+  .settings-header, .settings-body, .settings-footer { padding-left: 18px; padding-right: 18px; }
+  .settings-header { padding-top: 18px; }
+  .deck-header, .deck-browser-header, .settings-header, .settings-footer {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .settings-columns,
+  .settings-groups { grid-template-columns: minmax(0, 1fr); }
+  .settings-header-actions, .settings-footer { width: 100%; }
+  .settings-back-btn, .settings-reset-btn { width: 100%; }
+  .game-actions { width: 100%; justify-content: flex-start; }
+  .play-area {
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 0.95fr);
+    gap: 10px;
+  }
+  .active-card-body { grid-template-columns: minmax(0, 1.25fr) minmax(160px, 0.85fr); gap: 10px; }
+  .rune-stone-item { grid-template-columns: 56px minmax(0, 1fr); gap: 8px; min-height: 68px; padding: 7px; }
+  .rune-token { width: 56px; height: 56px; }
+  .rune-mod { font-size: 0.72rem; }
+  .card-mod-item { font-size: 0.76rem; padding: 7px 9px 7px 26px; }
+  .card-list { grid-auto-columns: 84px; }
+}
+
+@media (max-width: 640px) {
+  .settings-header h2 { font-size: 1.45rem; }
+  .settings-section--generation .count-settings { grid-template-columns: minmax(0, 1fr); }
+  .settings-body { padding-top: 14px; gap: 14px; }
+  .settings-section { padding: 14px; }
+  .play-area {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto auto;
+  }
+  .combat-panel {
+    min-height: 180px;
+  }
+  .active-card-body {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) minmax(120px, 34%);
+  }
+  .rune-tray {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: none;
+    align-items: center;
+    padding: 10px;
+  }
+  .rune-tray-header { display: flex; flex-direction: column; align-items: flex-start; }
+  .rune-list {
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+    height: auto;
+    max-height: none;
+    align-items: stretch;
+  }
+  .rune-stone-item {
+    grid-template-columns: 52px minmax(0, 1fr);
+    min-width: 200px;
+    max-width: 260px;
+    min-height: 0;
+    flex: 0 0 auto;
+  }
+  .rune-token { width: 52px; height: 52px; }
+  .rune-mod { font-size: 0.7rem; }
+  .deck-browser { padding: 8px 10px; }
+  .game-actions #game-status { width: 100%; white-space: normal; }
+  .card-list { grid-auto-columns: 72px; }
+}

@@ -4,7 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Rune Stone Deck Prototype</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles/base.css">
+  <link rel="stylesheet" href="styles/settings.css">
+  <link rel="stylesheet" href="styles/board.css">
+  <link rel="stylesheet" href="styles/runes.css">
+  <link rel="stylesheet" href="styles/combat.css">
+  <link rel="stylesheet" href="styles/deck.css">
+  <link rel="stylesheet" href="styles/responsive.css">
 </head>
 <body>
   <main>
@@ -63,7 +69,7 @@
             <div class="count-setting">
               <label class="count-setting-label" for="energy-per-turn">
                 <span class="count-setting-title">Energy per turn</span>
-                <span class="count-setting-hint">Colored energy gained each combat turn</span>
+                <span class="count-setting-hint">Energy gained each combat turn</span>
               </label>
               <div class="stepper">
                 <button type="button" class="stepper-btn" data-stepper-for="energy-per-turn" data-delta="-1" aria-label="Decrease energy per turn">−</button>
@@ -127,19 +133,6 @@
               <fieldset class="settings-group">
                 <legend>Stone rune</legend>
                 <div id="stone-rune-weights" class="weight-list"></div>
-              </fieldset>
-            </div>
-          </section>
-
-          <section class="settings-section" aria-labelledby="energy-weights-title">
-            <div class="settings-section-head">
-              <h3 id="energy-weights-title">Combat energy</h3>
-              <p>Relative chance for each color when granting energy each combat turn.</p>
-            </div>
-            <div class="settings-groups">
-              <fieldset class="settings-group">
-                <legend>Energy color</legend>
-                <div id="energy-color-weights" class="weight-list"></div>
               </fieldset>
             </div>
           </section>
@@ -260,6 +253,12 @@
   <script src="assets.js"></script>
   <script src="game-logic.js"></script>
   <script src="renderer.js"></script>
-  <script src="main.js"></script>
+  <script src="js/dom.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/drag.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>

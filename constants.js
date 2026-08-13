@@ -53,8 +53,6 @@ const DEFAULT_FIGHTER_STATS = {
   enemyNotes: "",
 };
 
-const ENERGY_COLORS = RUNE_STONE_ASSETS.map((stone) => stone.name);
-
 const DEFAULT_GAME_SETTINGS = {
   startCardCount: 5,
   startStoneCount: 5,
@@ -66,5 +64,4 @@ const DEFAULT_GAME_SETTINGS = {
   socketRuneWeights: Object.fromEntries(SOCKET_RUNE_ASSETS.map((rune) => [rune.name, 1])),
   stoneTypeWeights: Object.fromEntries(RUNE_STONE_ASSETS.map((stone) => [stone.name, 1])),
   stoneRuneWeights: Object.fromEntries(RADIANT_RUNE_ASSETS.map((rune) => [rune.name, 1])),
-  energyColorWeights: Object.fromEntries(ENERGY_COLORS.map((color) => [color, 1])),
 };
