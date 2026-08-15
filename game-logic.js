@@ -94,6 +94,7 @@ function createRandomCard(loaded, index, gameSettings, nextCardId) {
         (rune) => gameSettings.socketRuneWeights[rune.name],
       ),
       gem: null,
+      locked: false,
     })),
     deckButton: null,
     deckMeta: null,
@@ -166,11 +167,31 @@ function formatModLabel(mod, cost) {
 
 function cardProgress(card) {
   const filledCount = card.sockets.filter((socket) => socket.gem).length;
-  return `${filledCount}/${card.sockets.length}`;
+  const draftCount = card.sockets.filter((socket) => socket.gem && !socket.locked).length;
+  const lockedCount = filledCount - draftCount;
+  if (!filledCount) return `${filledCount}/${card.sockets.length}`;
+  if (draftCount && lockedCount) return `${filledCount}/${card.sockets.length} · ${draftCount} draft`;
+  if (draftCount) return `${filledCount}/${card.sockets.length} · draft`;
+  return `${filledCount}/${card.sockets.length} · locked`;
 }
 
 function socketIndexAt(card, point) {
   return card.sockets.findIndex(
     (socket) => distanceBetween(socket.point, point) <= SOCKET_SIZE / 2,
   );
+}
+
+function lockSocketedGems(cards) {
+  for (const card of cards) {
+    for (const socket of card.sockets) {
+      if (socket.gem) socket.locked = true;
+    }
+  }
+}
+
+function unsocketGem(card, socket) {
+  if (!card || !socket?.gem || socket.locked) return null;
+  const gem = socket.gem;
+  socket.gem = null;
+  return gem;
 }

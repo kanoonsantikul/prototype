@@ -53,6 +53,8 @@ function drawSocket(targetContext, socketImage, socket) {
   if (socket.gem) {
     const gemLeft = point.x - SOCKET_GEM_SIZE / 2;
     const gemTop = point.y - SOCKET_GEM_SIZE / 2;
+    targetContext.save();
+    if (socket.locked) targetContext.globalAlpha = 0.72;
 
     targetContext.drawImage(
       socket.gem.stone.image,
@@ -68,6 +70,15 @@ function drawSocket(targetContext, socketImage, socket) {
       SOCKET_GEM_SIZE,
       SOCKET_GEM_SIZE,
     );
+
+    if (socket.locked) {
+      targetContext.beginPath();
+      targetContext.arc(point.x, point.y, SOCKET_GEM_SIZE * 0.46, 0, Math.PI * 2);
+      targetContext.strokeStyle = "rgba(255, 214, 150, 0.55)";
+      targetContext.lineWidth = 4;
+      targetContext.stroke();
+    }
+    targetContext.restore();
   } else {
     targetContext.drawImage(
       socket.rune.image,
@@ -133,12 +144,21 @@ function drawDeckThumbnail(card, loadedAssets) {
   drawCardSurface(card, card.thumbnailCanvas, card.thumbnailContext, loadedAssets);
 }
 
-function drawFighterPortrait(targetContext, image, centerX, baselineY, maxHeight, label, flipHorizontal = false) {
+function drawFighterPortrait(targetContext, image, centerX, baselineY, maxHeight, label, flipHorizontal = false, selected = false) {
   const aspect = image.width / image.height;
   const height = maxHeight;
   const width = height * aspect;
   const left = centerX - width / 2;
   const top = baselineY - height;
+
+  if (selected) {
+    targetContext.save();
+    targetContext.fillStyle = "rgba(255, 176, 92, 0.16)";
+    targetContext.beginPath();
+    targetContext.ellipse(centerX, baselineY + 8, width * 0.42, 18, 0, 0, Math.PI * 2);
+    targetContext.fill();
+    targetContext.restore();
+  }
 
   targetContext.save();
   if (flipHorizontal) {
@@ -149,21 +169,37 @@ function drawFighterPortrait(targetContext, image, centerX, baselineY, maxHeight
   targetContext.restore();
 
   targetContext.save();
-  targetContext.font = "700 28px Segoe UI, system-ui, sans-serif";
+  targetContext.font = selected
+    ? "800 24px Segoe UI, system-ui, sans-serif"
+    : "700 22px Segoe UI, system-ui, sans-serif";
   targetContext.textAlign = "center";
   targetContext.textBaseline = "top";
-  targetContext.fillStyle = "rgba(232, 244, 236, 0.92)";
+  targetContext.fillStyle = selected ? "rgba(255, 214, 150, 0.96)" : "rgba(232, 244, 236, 0.92)";
   targetContext.shadowColor = "rgba(0, 0, 0, 0.75)";
   targetContext.shadowBlur = 8;
   targetContext.fillText(label, centerX, baselineY + 12);
   targetContext.restore();
 }
 
-function drawCombat(canvas, context, loadedAssets, enemy) {
+function encounterPortraits(enemies) {
+  const visible = (enemies || []).filter((enemy) => enemy?.image);
+  const count = visible.length;
+  const height = count > 1 ? COMBAT_FIGHTER_HEIGHT * (count === 2 ? 0.86 : 0.74) : COMBAT_FIGHTER_HEIGHT;
+  const startX = count === 1 ? COMBAT_WIDTH * 0.72 : COMBAT_WIDTH * 0.62;
+  const step = count === 1 ? 0 : (COMBAT_WIDTH * 0.82 - startX) / Math.max(1, count - 1);
+  return visible.map((enemy, index) => ({
+    enemy,
+    centerX: startX + step * index,
+    height,
+  }));
+}
+
+function drawCombat(canvas, context, loadedAssets, enemies) {
   if (!loadedAssets || !context) return;
 
   const scaleX = canvas.width / COMBAT_WIDTH;
   const scaleY = canvas.height / COMBAT_HEIGHT;
+  const roster = Array.isArray(enemies) ? enemies : (enemies ? [enemies] : []);
 
   context.setTransform(1, 0, 0, 1, 0, 0);
   context.clearRect(0, 0, canvas.width, canvas.height);
@@ -178,8 +214,7 @@ function drawCombat(canvas, context, loadedAssets, enemy) {
   context.fillRect(0, 0, COMBAT_WIDTH, COMBAT_HEIGHT);
 
   const baselineY = COMBAT_HEIGHT - 70;
-  const heroCenterX = COMBAT_WIDTH * 0.28;
-  const enemyCenterX = COMBAT_WIDTH * 0.72;
+  const heroCenterX = COMBAT_WIDTH * (roster.length > 1 ? 0.22 : 0.28);
 
   drawFighterPortrait(
     context,
@@ -190,15 +225,16 @@ function drawCombat(canvas, context, loadedAssets, enemy) {
     HERO_NAME,
   );
 
-  if (enemy?.image) {
+  for (const portrait of encounterPortraits(roster)) {
     drawFighterPortrait(
       context,
-      enemy.image,
-      enemyCenterX,
+      portrait.enemy.image,
+      portrait.centerX,
       baselineY,
-      COMBAT_FIGHTER_HEIGHT,
-      enemy.label || "Enemy",
+      portrait.height,
+      portrait.enemy.label || "Enemy",
       true,
+      portrait.enemy.id === selectedEnemyId || (roster.length === 1 && portrait.enemy === currentEnemy),
     );
   }
 

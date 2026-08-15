@@ -40,7 +40,7 @@
               </label>
               <div class="stepper">
                 <button type="button" class="stepper-btn" data-stepper-for="start-card-count" data-delta="-1" aria-label="Decrease deck cards">−</button>
-                <input id="start-card-count" type="number" min="1" max="50" step="1" value="5" inputmode="numeric">
+                <input id="start-card-count" type="number" min="1" max="50" step="1" value="6" inputmode="numeric">
                 <button type="button" class="stepper-btn" data-stepper-for="start-card-count" data-delta="1" aria-label="Increase deck cards">+</button>
               </div>
             </div>
@@ -51,7 +51,7 @@
               </label>
               <div class="stepper">
                 <button type="button" class="stepper-btn" data-stepper-for="start-stone-count" data-delta="-1" aria-label="Decrease rune stones">−</button>
-                <input id="start-stone-count" type="number" min="0" max="100" step="1" value="5" inputmode="numeric">
+                <input id="start-stone-count" type="number" min="0" max="100" step="1" value="8" inputmode="numeric">
                 <button type="button" class="stepper-btn" data-stepper-for="start-stone-count" data-delta="1" aria-label="Increase rune stones">+</button>
               </div>
             </div>
@@ -62,7 +62,7 @@
               </label>
               <div class="stepper">
                 <button type="button" class="stepper-btn" data-stepper-for="combat-hand-size" data-delta="-1" aria-label="Decrease combat hand size">−</button>
-                <input id="combat-hand-size" type="number" min="1" max="20" step="1" value="3" inputmode="numeric">
+                <input id="combat-hand-size" type="number" min="1" max="20" step="1" value="4" inputmode="numeric">
                 <button type="button" class="stepper-btn" data-stepper-for="combat-hand-size" data-delta="1" aria-label="Increase combat hand size">+</button>
               </div>
             </div>
@@ -73,7 +73,7 @@
               </label>
               <div class="stepper">
                 <button type="button" class="stepper-btn" data-stepper-for="energy-per-turn" data-delta="-1" aria-label="Decrease energy per turn">−</button>
-                <input id="energy-per-turn" type="number" min="0" max="20" step="1" value="3" inputmode="numeric">
+                <input id="energy-per-turn" type="number" min="0" max="20" step="1" value="4" inputmode="numeric">
                 <button type="button" class="stepper-btn" data-stepper-for="energy-per-turn" data-delta="1" aria-label="Increase energy per turn">+</button>
               </div>
             </div>
@@ -95,7 +95,7 @@
               </label>
               <div class="stepper">
                 <button type="button" class="stepper-btn" data-stepper-for="reward-stone-count" data-delta="-1" aria-label="Decrease reward stones">−</button>
-                <input id="reward-stone-count" type="number" min="0" max="100" step="1" value="3" inputmode="numeric">
+                <input id="reward-stone-count" type="number" min="0" max="100" step="1" value="4" inputmode="numeric">
                 <button type="button" class="stepper-btn" data-stepper-for="reward-stone-count" data-delta="1" aria-label="Increase reward stones">+</button>
               </div>
             </div>
@@ -155,6 +155,10 @@
           <h1 id="phase-title">Deck building</h1>
         </div>
         <div id="deck-count">0 cards</div>
+        <div class="mode-switch" role="group" aria-label="Game mode">
+          <button id="mode-sandbox" type="button" data-mode="sandbox" aria-pressed="true">Sandbox</button>
+          <button id="mode-real" type="button" data-mode="real" aria-pressed="false">Real game</button>
+        </div>
         <button id="start-combat" class="primary" type="button" disabled>Start combat</button>
         <button id="end-combat" class="primary" type="button" hidden disabled>End combat</button>
         <button id="new-game-in-game" type="button">New game</button>
@@ -212,24 +216,14 @@
                   <input id="hero-hp" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" value="20" aria-label="Hero HP">
                 </label>
               </header>
+              <p id="hero-intent" class="fighter-intent" hidden></p>
+              <ul id="hero-statuses" class="fighter-status-list" hidden></ul>
               <label class="fighter-notes-field" for="hero-notes">
                 <span>Notes</span>
                 <textarea id="hero-notes" rows="5" placeholder="Status effects, buffs…" aria-label="Hero notes"></textarea>
               </label>
             </article>
-            <article class="fighter-card fighter-card--enemy" aria-label="Enemy tracker">
-              <header class="fighter-card-header">
-                <h3 id="enemy-name">Enemy</h3>
-                <label class="fighter-hp-field" for="enemy-hp">
-                  <span>HP</span>
-                  <input id="enemy-hp" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" value="20" aria-label="Enemy HP">
-                </label>
-              </header>
-              <label class="fighter-notes-field" for="enemy-notes">
-                <span>Notes</span>
-                <textarea id="enemy-notes" rows="5" placeholder="Status effects, intents…" aria-label="Enemy notes"></textarea>
-              </label>
-            </article>
+            <div id="enemy-trackers" class="enemy-trackers" aria-label="Enemy trackers"></div>
           </div>
           <div class="combat-actions">
             <button id="end-turn" class="primary" type="button" hidden disabled>End turn</button>
@@ -252,6 +246,8 @@
   <script src="utils.js"></script>
   <script src="assets.js"></script>
   <script src="game-logic.js"></script>
+  <script src="combat.js"></script>
+  <script src="combat-resolve.js"></script>
   <script src="renderer.js"></script>
   <script src="js/dom.js"></script>
   <script src="js/state.js"></script>

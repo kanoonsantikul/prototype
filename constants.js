@@ -45,22 +45,46 @@ const ENEMY_ASSETS = [
 const SOCKET_COUNT_OPTIONS = [1, 2, 3, 4, 5, 6, 7];
 const PHASE_DECK_BUILDING = "deck-building";
 const PHASE_COMBAT = "combat";
+const GAME_MODE_SANDBOX = "sandbox";
+const GAME_MODE_REAL = "real";
+
+const HERO_COMBAT_STATS = {
+  hp: 30,
+  attack: 0,
+};
+
+const ENEMY_COMBAT_STATS = {
+  minion: { hp: 10, attack: 2 },
+  speed: { hp: 8, attack: 3 },
+  tank: { hp: 16, attack: 2 },
+};
+
+const POST_COMBAT_HEAL = 8;
+const ENCOUNTER_MAX_SIZE = 3;
 
 const DEFAULT_FIGHTER_STATS = {
-  heroHp: "20",
+  heroHp: "30",
   heroNotes: "",
-  enemyHp: "20",
+  enemyHp: "10",
   enemyNotes: "",
 };
 
 const DEFAULT_GAME_SETTINGS = {
-  startCardCount: 5,
-  startStoneCount: 5,
-  combatHandSize: 3,
-  energyPerTurn: 3,
+  startCardCount: 6,
+  startStoneCount: 8,
+  combatHandSize: 4,
+  energyPerTurn: 4,
   rewardCardCount: 1,
-  rewardStoneCount: 3,
-  socketCountWeights: Object.fromEntries(SOCKET_COUNT_OPTIONS.map((count) => [count, 1])),
+  rewardStoneCount: 4,
+  socketCountWeights: {
+    1: 4,
+    2: 9,
+    3: 11,
+    4: 5,
+    5: 0.5,
+    6: 0.15,
+    7: 0.05,
+  },
   socketRuneWeights: Object.fromEntries(SOCKET_RUNE_ASSETS.map((rune) => [rune.name, 1])),
   stoneTypeWeights: Object.fromEntries(RUNE_STONE_ASSETS.map((stone) => [stone.name, 1])),
   stoneRuneWeights: Object.fromEntries(RADIANT_RUNE_ASSETS.map((rune) => [rune.name, 1])),

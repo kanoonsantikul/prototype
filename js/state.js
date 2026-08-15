@@ -2,6 +2,7 @@
 
 let loadedAssets = null;
 let gameSettings = structuredClone(DEFAULT_GAME_SETTINGS);
+let gameMode = GAME_MODE_SANDBOX;
 let phase = PHASE_DECK_BUILDING;
 let deck = [];
 let drawPile = [];
@@ -10,7 +11,13 @@ let hand = [];
 let sideGems = [];
 let combatEnergy = 0;
 let currentEnemy = null;
+let currentEncounter = [];
+let selectedEnemyId = null;
+let combatHero = null;
+let combatEnemies = [];
 let combatTurn = 0;
+let encounterWave = 1;
+let persistedHeroHp = null;
 let selectedCardId = null;
 let nextCardId = 1;
 let nextGemId = 1;

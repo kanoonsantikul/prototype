@@ -2,12 +2,18 @@
 
 function updatePhaseChrome() {
   const deckBuilding = isDeckBuilding();
+  const realGame = isRealGame();
 
   gameBoard.dataset.phase = phase;
+  gameBoard.dataset.mode = gameMode;
   gameBoard.classList.toggle("phase-deck-building", deckBuilding);
   gameBoard.classList.toggle("phase-combat", !deckBuilding);
+  gameBoard.classList.toggle("mode-real", realGame);
+  gameBoard.classList.toggle("mode-sandbox", !realGame);
 
-  phaseEyebrow.textContent = deckBuilding ? "Phase 1" : "Phase 2";
+  phaseEyebrow.textContent = realGame
+    ? (deckBuilding ? `Real game · wave ${encounterWave}` : `Live combat · wave ${encounterWave}`)
+    : (deckBuilding ? "Phase 1" : "Phase 2");
   phaseTitle.textContent = deckBuilding ? "Deck building" : "Combat";
   cardBrowserLabel.textContent = deckBuilding ? "Your deck" : "Your hand";
   cardList.setAttribute("aria-label", deckBuilding ? "Cards in your deck" : "Cards in your hand");
@@ -18,6 +24,7 @@ function updatePhaseChrome() {
   endTurnButton.disabled = deckBuilding || deck.length === 0;
   endCombatButton.hidden = deckBuilding;
   endCombatButton.disabled = deckBuilding || deck.length === 0;
+  endCombatButton.textContent = realGame ? "Retreat" : "End combat";
   combatTurnLabel.hidden = deckBuilding;
   combatTurnLabel.textContent = deckBuilding ? "Turn 0" : `Turn ${combatTurn}`;
 
@@ -28,6 +35,8 @@ function updatePhaseChrome() {
   }
 
   renderCombatEnergy();
+  updateModeSwitch();
+  if (!deckBuilding) updateFighterTrackers();
 }
 
 function redrawActiveCard() {
@@ -40,33 +49,225 @@ function redrawActiveCard() {
   drawActiveCard(card, activeCardCanvas, activeCardContext, loadedAssets, dropTarget);
 }
 
-function selectRandomEnemy() {
-  if (!loadedAssets?.enemies?.length) {
-    currentEnemy = null;
-    return null;
-  }
+function selectEncounter(wave = encounterWave) {
+  currentEncounter = generateEncounter(wave);
+  currentEnemy = currentEncounter[0] || null;
+  selectedEnemyId = null;
+  return currentEncounter;
+}
 
-  currentEnemy = randomItem(loadedAssets.enemies);
-  return currentEnemy;
+function renderStatusChips(list, fighter) {
+  const labels = statusLabels(fighter);
+  const fragment = document.createDocumentFragment();
+  for (const label of labels) {
+    const item = document.createElement("li");
+    item.className = "fighter-status";
+    item.textContent = label;
+    fragment.append(item);
+  }
+  list.replaceChildren(fragment);
+  list.hidden = labels.length === 0;
+}
+
+function visibleEncounter() {
+  if (isRealGame() && isCombat() && combatEnemies.length) return combatEnemies;
+  return currentEncounter;
+}
+
+function encounterPortraitSources() {
+  if (isRealGame() && isCombat() && combatEnemies.length) {
+    return combatEnemies
+      .filter((fighter) => fighter.alive)
+      .map((fighter) => ({
+        id: fighter.id,
+        label: fighter.name,
+        image: fighter.asset?.image,
+      }));
+  }
+  return visibleEncounter().map((enemy) => ({
+    id: enemy.id || enemy.name,
+    label: enemy.label,
+    image: enemy.image,
+  }));
+}
+
+function createEnemyTrackerCard(enemy, options = {}) {
+  const { live = false, selected = false, sandbox = false } = options;
+  const card = document.createElement("article");
+  card.className = "fighter-card fighter-card--enemy";
+  if (selected) card.classList.add("is-selected");
+  if (!enemy.alive && live) card.classList.add("is-defeated");
+  card.dataset.enemyId = enemy.id || "";
+
+  const header = document.createElement("header");
+  header.className = "fighter-card-header";
+  const name = document.createElement("h3");
+  name.textContent = enemy.name || enemy.label || "Enemy";
+  const hpField = document.createElement("label");
+  hpField.className = "fighter-hp-field";
+  const hpCaption = document.createElement("span");
+  hpCaption.textContent = "HP";
+  const hpInput = document.createElement("input");
+  hpInput.type = "text";
+  hpInput.inputMode = "numeric";
+  hpInput.autocomplete = "off";
+  hpInput.spellcheck = false;
+  hpInput.setAttribute("aria-label", `${name.textContent} HP`);
+  hpInput.value = live
+    ? `${Math.max(0, enemy.hp)}/${enemy.maxHp}`
+    : `${enemy.hp || DEFAULT_FIGHTER_STATS.enemyHp}`;
+  hpInput.readOnly = live;
+  hpField.append(hpCaption, hpInput);
+  header.append(name, hpField);
+
+  const intent = document.createElement("p");
+  intent.className = "fighter-intent";
+  intent.textContent = live
+    ? `Intent: ${enemyIntent(enemy)}`
+    : (currentEncounter.length > 1 ? `Wave ${encounterWave} pack` : `Wave ${encounterWave}`);
+  intent.hidden = sandbox;
+
+  const statuses = document.createElement("ul");
+  statuses.className = "fighter-status-list";
+  if (live) renderStatusChips(statuses, enemy);
+  else statuses.hidden = true;
+
+  const notesField = document.createElement("label");
+  notesField.className = "fighter-notes-field";
+  const notesCaption = document.createElement("span");
+  notesCaption.textContent = "Notes";
+  const notes = document.createElement("textarea");
+  notes.rows = 4;
+  notes.placeholder = "Status effects, intents…";
+  notes.setAttribute("aria-label", `${name.textContent} notes`);
+  notesField.append(notesCaption, notes);
+  notesField.hidden = !sandbox;
+
+  card.append(header, intent, statuses, notesField);
+  if (live && enemy.alive) {
+    card.tabIndex = 0;
+    card.setAttribute("role", "button");
+    card.addEventListener("click", () => {
+      selectCombatEnemy(enemy.id);
+      redrawCombat();
+    });
+  }
+  return card;
+}
+
+function renderEnemyTrackers() {
+  const live = isRealGame() && isCombat() && combatHero;
+  const sandbox = !live;
+  const enemies = live
+    ? combatEnemies
+    : visibleEncounter().map((enemy, index) => {
+      const stats = scaledEnemyStats(enemy.name, encounterWave);
+      return {
+        id: enemy.id || `preview-${index}`,
+        name: enemy.label,
+        label: enemy.label,
+        alive: true,
+        hp: stats.hp,
+        maxHp: stats.hp,
+      };
+    });
+  const selectedId = live ? (primaryEnemy()?.id || "") : "";
+  const signature = `${live ? "live" : "preview"}:${encounterWave}:${enemies.map((enemy) => `${enemy.id}:${enemy.hp}:${enemy.alive ? 1 : 0}`).join("|")}:${selectedId}`;
+  if (!live && enemyTrackers.dataset.signature === signature) return;
+  enemyTrackers.dataset.signature = signature;
+  enemyTrackers.replaceChildren(
+    ...enemies.map((enemy) => createEnemyTrackerCard(enemy, {
+      live,
+      sandbox,
+      selected: live && enemy.id === selectedId,
+    })),
+  );
+}
+
+function resetSandboxFighterTrackers() {
+  heroNameLabel.textContent = HERO_NAME;
+  heroHpInput.value = String(persistedHeroHp ?? DEFAULT_FIGHTER_STATS.heroHp);
+  heroNotesInput.value = DEFAULT_FIGHTER_STATS.heroNotes;
+  heroIntentLabel.hidden = true;
+  heroStatusList.hidden = true;
+  renderEnemyTrackers();
 }
 
 function resetFighterTrackers() {
-  heroNameLabel.textContent = HERO_NAME;
-  enemyNameLabel.textContent = currentEnemy?.label || "Enemy";
-  heroHpInput.value = DEFAULT_FIGHTER_STATS.heroHp;
-  enemyHpInput.value = DEFAULT_FIGHTER_STATS.enemyHp;
-  heroNotesInput.value = DEFAULT_FIGHTER_STATS.heroNotes;
-  enemyNotesInput.value = DEFAULT_FIGHTER_STATS.enemyNotes;
+  if (isRealGame() && isCombat() && combatHero) {
+    syncRealFighterTrackers();
+    return;
+  }
+  resetSandboxFighterTrackers();
 }
 
-function updateFighterLabels() {
+function syncRealFighterTrackers() {
+  heroNameLabel.textContent = combatHero?.name || HERO_NAME;
+  heroHpInput.value = combatHero ? `${combatHero.hp}/${combatHero.maxHp}` : "0";
+  heroHpInput.readOnly = true;
+  heroNotesInput.hidden = true;
+  heroNotesInput.closest(".fighter-notes-field").hidden = true;
+  heroIntentLabel.hidden = false;
+  heroIntentLabel.textContent = combatHero?.alive ? "Your turn" : "Defeated";
+  renderStatusChips(heroStatusList, combatHero);
+  renderEnemyTrackers();
+}
+
+function updateFighterTrackers() {
+  const liveRealCombat = isRealGame() && isCombat() && combatHero;
+  heroHpInput.readOnly = liveRealCombat;
+  heroNotesInput.closest(".fighter-notes-field").hidden = liveRealCombat;
+
+  if (liveRealCombat) {
+    syncRealFighterTrackers();
+    return;
+  }
+
+  heroIntentLabel.hidden = true;
+  heroStatusList.hidden = true;
   heroNameLabel.textContent = HERO_NAME;
-  enemyNameLabel.textContent = currentEnemy?.label || "Enemy";
+  renderEnemyTrackers();
 }
 
 function redrawCombat() {
-  updateFighterLabels();
-  drawCombat(combatCanvas, combatContext, loadedAssets, currentEnemy);
+  updateFighterTrackers();
+  drawCombat(combatCanvas, combatContext, loadedAssets, encounterPortraitSources());
+}
+
+function enemyIdAtClientPoint(clientX) {
+  if (!isRealGame() || !isCombat() || !combatHero) return null;
+  const living = livingEnemies();
+  if (living.length <= 1) return living[0]?.id || null;
+
+  const bounds = combatCanvas.getBoundingClientRect();
+  const localX = ((clientX - bounds.left) / bounds.width) * COMBAT_WIDTH;
+  const portraits = encounterPortraits(encounterPortraitSources());
+  let closest = null;
+  let closestDistance = Infinity;
+  for (const portrait of portraits) {
+    const distance = Math.abs(localX - portrait.centerX);
+    if (distance < closestDistance) {
+      closest = portrait;
+      closestDistance = distance;
+    }
+  }
+  if (!closest || closestDistance > 140) return null;
+  return closest.enemy.id;
+}
+
+function handleCombatCanvasClick(event) {
+  const enemyId = enemyIdAtClientPoint(event.clientX);
+  if (!enemyId) return;
+  selectCombatEnemy(enemyId);
+  redrawCombat();
+}
+
+function updateModeSwitch() {
+  const realGame = isRealGame();
+  modeSandboxButton.setAttribute("aria-pressed", String(!realGame));
+  modeRealButton.setAttribute("aria-pressed", String(realGame));
+  modeSandboxButton.disabled = isCombat();
+  modeRealButton.disabled = isCombat();
 }
 
 function renderCombatEnergy() {

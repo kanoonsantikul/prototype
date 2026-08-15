@@ -3,14 +3,23 @@
 initializeSettings();
 
 activeCardCanvas.addEventListener("pointerdown", handleActiveCardPointerDown);
-activeCardCanvas.addEventListener("pointermove", handleCardPointerMove);
-activeCardCanvas.addEventListener("pointerup", handleCardPointerUp);
-activeCardCanvas.addEventListener("pointercancel", handleCardPointerCancel);
+activeCardCanvas.addEventListener("pointermove", (event) => {
+  handleActiveCardPointerMove(event);
+  updateSocketHoverCursor(event);
+});
+activeCardCanvas.addEventListener("pointerup", handleActiveCardPointerUp);
+activeCardCanvas.addEventListener("pointercancel", handleActiveCardPointerCancel);
+window.addEventListener("pointermove", handleGemPointerMove);
+window.addEventListener("pointerup", handleGemPointerUp);
+window.addEventListener("pointercancel", handleGemPointerCancel);
 
 newGameButton.addEventListener("click", startNewGame);
 startCombatButton.addEventListener("click", startCombat);
 endTurnButton.addEventListener("click", endTurn);
-endCombatButton.addEventListener("click", endCombat);
+endCombatButton.addEventListener("click", () => endCombat());
+modeSandboxButton.addEventListener("click", () => setGameMode(GAME_MODE_SANDBOX));
+modeRealButton.addEventListener("click", () => setGameMode(GAME_MODE_REAL));
+combatCanvas.addEventListener("click", handleCombatCanvasClick);
 settingsInGameButton.addEventListener("click", openSettings);
 settingsCloseButton.addEventListener("click", closeSettings);
 settingsPanel.addEventListener("click", (event) => {

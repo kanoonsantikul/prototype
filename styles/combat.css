@@ -121,14 +121,21 @@
   height: min(100cqh, calc(100cqw * 5 / 8));
   border-radius: 10px;
   filter: drop-shadow(0 12px 18px rgb(0 0 0 / 45%));
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 
 .combat-fighters {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(170px, 0.85fr) minmax(0, 1.45fr);
   gap: 10px;
+  min-width: 0;
+  align-items: start;
+}
+.enemy-trackers {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
   min-width: 0;
 }
 .fighter-card {
@@ -143,6 +150,16 @@
 .fighter-card--enemy {
   border-color: rgb(220 120 130 / 22%);
   background: rgb(28 12 16 / 45%);
+}
+.fighter-card--enemy.is-selected {
+  border-color: rgb(255 176 92 / 70%);
+  box-shadow: 0 0 0 1px rgb(255 176 92 / 28%);
+}
+.fighter-card--enemy.is-defeated {
+  opacity: 0.48;
+}
+.game-board.mode-real .fighter-card--enemy[role="button"] {
+  cursor: pointer;
 }
 .fighter-card-header {
   display: flex;
@@ -221,6 +238,48 @@
 .fighter-card--enemy .fighter-notes-field textarea:focus {
   border-color: #c86a76;
   box-shadow: 0 0 0 2px rgb(255 107 122 / 16%);
+}
+.fighter-hp-field input:read-only {
+  cursor: default;
+  color: var(--accent);
+}
+.fighter-card--enemy .fighter-hp-field input:read-only {
+  color: #ffd0d6;
+}
+.fighter-intent {
+  margin: 0;
+  color: var(--soft);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.fighter-status-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  min-height: 0;
+}
+.fighter-status {
+  padding: 3px 8px;
+  border: 1px solid rgb(110 220 160 / 22%);
+  border-radius: 999px;
+  background: rgb(8 24 18 / 75%);
+  color: var(--text);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: capitalize;
+}
+.fighter-card--enemy .fighter-status {
+  border-color: rgb(220 120 130 / 28%);
+  background: rgb(36 14 18 / 70%);
+}
+.game-board.mode-sandbox .fighter-intent,
+.game-board.mode-sandbox .fighter-status-list {
+  display: none;
 }
 
 .combat-actions {

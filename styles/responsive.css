@@ -44,6 +44,9 @@
   .combat-panel {
     min-height: 180px;
   }
+  .combat-fighters {
+    grid-template-columns: minmax(0, 1fr);
+  }
   .active-card-body {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr) minmax(120px, 34%);

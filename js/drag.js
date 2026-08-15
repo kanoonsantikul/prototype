@@ -125,6 +125,7 @@ function placeGemOnCard(gem, card, socketIndex) {
   }
 
   socket.gem = gem;
+  socket.locked = false;
   sideGems = sideGems.filter((candidate) => candidate.id !== gem.id);
   renderSideRuneStones();
   clearDropFeedback();
@@ -135,17 +136,12 @@ function placeGemOnCard(gem, card, socketIndex) {
 }
 
 
-function handleGemPointerDown(event, gem) {
-  if (!isDeckBuilding()) return;
-  if (event.isPrimary === false || (event.pointerType === "mouse" && event.button !== 0)) return;
-  if (draggingGemId || draggingCardId) return;
-
-  event.preventDefault();
+function beginGemDrag(event, gem, token = event.currentTarget) {
   draggingGemId = gem.id;
   draggingPointerId = event.pointerId;
-  draggingToken = event.currentTarget;
-  event.currentTarget.classList.add("is-dragging");
-  event.currentTarget.setPointerCapture(event.pointerId);
+  draggingToken = token && token !== activeCardCanvas ? token : null;
+  draggingToken?.classList.add("is-dragging");
+  (token || activeCardCanvas).setPointerCapture?.(event.pointerId);
 
   dragPreview = document.createElement("canvas");
   dragPreview.width = 128;
@@ -155,6 +151,46 @@ function handleGemPointerDown(event, gem) {
   document.body.append(dragPreview);
   document.body.classList.add("is-dragging-stone");
   moveDragPreview(event.clientX, event.clientY);
+}
+
+function handleGemPointerDown(event, gem) {
+  if (!isDeckBuilding()) return;
+  if (event.isPrimary === false || (event.pointerType === "mouse" && event.button !== 0)) return;
+  if (draggingGemId || draggingCardId) return;
+
+  event.preventDefault();
+  beginGemDrag(event, gem, event.currentTarget);
+}
+
+function handleSocketedGemPointerDown(event) {
+  if (!isDeckBuilding()) return;
+  if (event.isPrimary === false || (event.pointerType === "mouse" && event.button !== 0)) return;
+  if (draggingGemId || draggingCardId) return;
+
+  const card = selectedCard();
+  if (!card) return;
+
+  const socketIndex = socketIndexFromClientPoint(card, event.clientX, event.clientY);
+  if (socketIndex < 0) return;
+
+  const socket = card.sockets[socketIndex];
+  if (!socket.gem) return;
+  if (socket.locked) {
+    setStatus("That stone locked in after the last combat.");
+    return;
+  }
+
+  event.preventDefault();
+  const gem = unsocketGem(card, socket);
+  if (!gem) return;
+
+  sideGems.push(gem);
+  renderSideRuneStones();
+  drawDeckThumbnail(card, loadedAssets);
+  updateActiveCardDetails(card);
+  updatePhaseChrome();
+  beginGemDrag(event, gem, activeCardCanvas);
+  setStatus("Pulled stone off the card. Drop it on a matching socket or back in the tray.");
 }
 
 function handleGemPointerMove(event) {
@@ -255,6 +291,8 @@ function handleCardPointerUp(event) {
   const card = hand.find((candidate) => candidate.id === cardId);
   if (!card || !overCombat) return;
 
+  const targetId = enemyIdAtClientPoint(event.clientX);
+  if (targetId) selectCombatEnemy(targetId);
   playCardFromHand(card);
 }
 
@@ -264,8 +302,54 @@ function handleCardPointerCancel(event) {
 }
 
 function handleActiveCardPointerDown(event) {
+  if (isDeckBuilding()) {
+    handleSocketedGemPointerDown(event);
+    return;
+  }
   if (!isCombat()) return;
   const card = selectedCard();
   if (!card) return;
   handleCardPointerDown(event, card, "preview");
+}
+
+function handleActiveCardPointerMove(event) {
+  if (draggingGemId) return;
+  handleCardPointerMove(event);
+}
+
+function handleActiveCardPointerUp(event) {
+  if (draggingGemId) return;
+  handleCardPointerUp(event);
+}
+
+function handleActiveCardPointerCancel(event) {
+  if (draggingGemId) return;
+  handleCardPointerCancel(event);
+}
+
+function updateSocketHoverCursor(event) {
+  if (!isDeckBuilding() || draggingGemId || draggingCardId) {
+    activeCardCanvas.style.cursor = "";
+    return;
+  }
+
+  const card = selectedCard();
+  if (!card) {
+    activeCardCanvas.style.cursor = "";
+    return;
+  }
+
+  const socketIndex = socketIndexFromClientPoint(card, event.clientX, event.clientY);
+  if (socketIndex < 0) {
+    activeCardCanvas.style.cursor = "";
+    return;
+  }
+
+  const socket = card.sockets[socketIndex];
+  if (!socket.gem) {
+    activeCardCanvas.style.cursor = "";
+    return;
+  }
+
+  activeCardCanvas.style.cursor = socket.locked ? "not-allowed" : "grab";
 }

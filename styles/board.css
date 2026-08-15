@@ -5,6 +5,33 @@
   gap: 12px;
 }
 .deck-header { padding: 0 6px; gap: 10px; }
+.mode-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgb(0 0 0 / 28%);
+}
+.mode-switch button {
+  margin: 0;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.mode-switch button[aria-pressed="true"] {
+  background: linear-gradient(180deg, #2a8a60 0%, #1a6048 100%);
+  color: var(--text);
+}
+.mode-switch button:disabled {
+  opacity: 0.45;
+}
 .phase-heading {
   display: grid;
   gap: 2px;
